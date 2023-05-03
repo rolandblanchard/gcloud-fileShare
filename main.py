@@ -17,6 +17,7 @@ def createUserInfo(claims):
     entity.update({
         'email': claims['email'],
         'name': claims['name'],
+        'directory_list': []
     })
     datastore_client.put(entity)
 
@@ -25,6 +26,66 @@ def retrieveUserInfo(claims):
     entity_key = datastore_client.key('UserInfo', claims['email'])
     entity = datastore_client.get(entity_key)
     return entity
+
+# doesn't avoid dups!!
+
+
+def createDirectoryEntity(claims, directory_name):
+    id = random.getrandbits(63)
+
+    entity_key = datastore_client.key('Directory', id)
+    entity = datastore.Entity(key=entity_key)
+    entity.update({
+        'name': directory_name,
+        'subDirectories': []
+    })
+
+    datastore_client.put(entity)
+
+    return id
+
+
+def addDirectoryToUser(user_info, id):
+    directory_keys = user_info['directory_list']
+    directory_keys.append(id)
+    user_info.update({
+        'directory_list': directory_keys
+    })
+    datastore_client.put(user_info)
+
+
+def deleteDirectoryEntity(claims, id):
+    user_info = retrieveUserInfo(claims)
+    directory_list_keys = user_info['directory_list']
+
+    directory_key = datastore_client.key('Directory', directory_list_keys[id])
+    datastore_client.delete(directory_key)
+
+    del directory_list_keys[id]
+    user_info.update({
+        'directory_list': directory_list_keys
+    })
+    datastore_client.put(user_info)
+
+
+def retrieveDirectoryEntity(user_info):
+    # make key objects out of all the keys and retrieve them
+    directory_ids = user_info['directory_list']
+    directory_keys = []
+    for i in range(len(directory_ids)):
+        directory_keys.append(datastore_client.key(
+            'Directory', directory_ids[i]))
+
+    directory_list = datastore_client.get_multi(directory_keys)
+    return directory_list
+
+
+def createFileEntity(claims):
+    return None
+
+
+def retrieveFileEntity(claims):
+    return None
 
 
 def blobList(prefix):
@@ -70,6 +131,10 @@ def addDirectoryHandler():
                 return redirect('/')
             user_info = retrieveUserInfo(claims)
             addDirectory(directory_name)
+            # adding directory to datastore
+            id = createDirectoryEntity(claims, directory_name)
+            addDirectoryToUser(user_info, id)
+
         except ValueError as exc:
             error_message = str(exc)
     return redirect('/')
