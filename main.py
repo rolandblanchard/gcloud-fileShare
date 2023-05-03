@@ -5,114 +5,88 @@ import google.oauth2.id_token
 from google.auth.transport import requests
 from google.cloud import datastore, storage
 from flask import Flask, render_template, request, redirect, Response
+
+from utils.userInfo import *
+from utils.directory import *
+from utils.file import *
+from utils.bucket import *
+
+
 app = Flask(__name__)
 datastore_client = datastore.Client()
 
 firebase_request_adapter = requests.Request()
 
 
-def createUserInfo(claims):
-    entity_key = datastore_client.key('UserInfo', claims['email'])
-    entity = datastore.Entity(key=entity_key)
-    entity.update({
-        'email': claims['email'],
-        'name': claims['name'],
-        'directory_list': []
-    })
-    datastore_client.put(entity)
-
-
-def retrieveUserInfo(claims):
-    entity_key = datastore_client.key('UserInfo', claims['email'])
-    entity = datastore_client.get(entity_key)
-    return entity
-
-# doesn't avoid dups!!
-
-
-def createDirectoryEntity(claims, directory_name):
-    id = random.getrandbits(63)
-
-    entity_key = datastore_client.key('Directory', id)
-    entity = datastore.Entity(key=entity_key)
-    entity.update({
-        'name': directory_name,
-        'subDirectories': []
-    })
-
-    datastore_client.put(entity)
-
-    return id
-
-
-def addDirectoryToUser(user_info, id):
-    directory_keys = user_info['directory_list']
-    directory_keys.append(id)
-    user_info.update({
-        'directory_list': directory_keys
-    })
-    datastore_client.put(user_info)
-
-
-def deleteDirectoryEntity(claims, id):
+def deleteDirectoryEntity(claims, directory_name):
     user_info = retrieveUserInfo(claims)
     directory_list_keys = user_info['directory_list']
 
-    directory_key = datastore_client.key('Directory', directory_list_keys[id])
+    directory_key = datastore_client.key(
+        'Directory', directory_list_keys[directory_name])
     datastore_client.delete(directory_key)
 
-    del directory_list_keys[id]
+    del directory_list_keys[directory_name]
     user_info.update({
         'directory_list': directory_list_keys
     })
     datastore_client.put(user_info)
 
 
-def retrieveDirectoryEntity(user_info):
-    # make key objects out of all the keys and retrieve them
-    directory_ids = user_info['directory_list']
-    directory_keys = []
-    for i in range(len(directory_ids)):
-        directory_keys.append(datastore_client.key(
-            'Directory', directory_ids[i]))
+@app.route('/enter_directory/<dirname>/', methods=['POST'])
+def enterDirectoryHandler(dirname):
+    id_token = request.cookies.get("token")
+    error_message = None
+    claims = None
+    times = None
+    user_info = None
+    file_list = []
+    directory_list = []
 
-    directory_list = datastore_client.get_multi(directory_keys)
-    return directory_list
+    if id_token:
+        try:
+            claims = google.oauth2.id_token.verify_firebase_token(
+                id_token, firebase_request_adapter)
+            user_info = retrieveUserInfo(claims)
 
+            blob_list = blobList(dirname)
+            for i in blob_list:
+                if i.name[len(i.name) - 1] == '/':
+                    directory_list.append(i)
+                else:
+                    file_list.append(i)
 
-def createFileEntity(claims):
-    return None
+        except ValueError as exc:
+            error_message = str(exc)
 
-
-def retrieveFileEntity(claims):
-    return None
-
-
-def blobList(prefix):
-    storage_client = storage.Client(project=local_constants.PROJECT_NAME)
-    return storage_client.list_blobs(local_constants.PROJECT_STORAGE_BUCKET, prefix=prefix)
-
-
-def addDirectory(directory_name):
-    storage_client = storage.Client(project=local_constants.PROJECT_NAME)
-    bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
-    blob = bucket.blob(directory_name)
-    blob.upload_from_string(
-        '', content_type='application/x-www-form-urlencoded;charset=UTF-8')
+    return render_template('directory.html', user_data=claims, error_message=error_message,
+                           user_info=user_info, file_list=file_list, directory_list=directory_list, directory_name=dirname)
 
 
-def addFile(file):
-    storage_client = storage.Client(project=local_constants.PROJECT_NAME)
-    bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
-    blob = bucket.blob(file.filename)
-    blob.upload_from_file(file)
+@app.route('/upload_file_dir/<dirname>/', methods=['POST'])
+def uploadFileToDirHandler(dirname):
+    id_token = request.cookies.get("token")
+    error_message = None
+    claims = None
+    times = None
+    user_info = None
 
-
-def downloadBlob(filename):
-    storage_client = storage.Client(project=local_constants.PROJECT_NAME)
-    bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
-    blob = bucket.blob(filename)
-    return blob.download_as_bytes()
+    if id_token:
+        try:
+            claims = google.oauth2.id_token.verify_firebase_token(id_token,
+                                                                  firebase_request_adapter)
+            file = request.files['file_name']
+            if file.filename == '':
+                return redirect('/')
+            user_info = retrieveUserInfo(claims)
+            addFile(file, dirname)
+            # adding directory to datastore
+            id = createFileEntity(file.filename)
+            addFileToDirectory(dirname, id)
+        except ValueError as exc:
+            error_message = str(exc)
+    return render_template('directory.html', user_data=claims, error_message=error_message,
+                           user_info=user_info, directory_name=dirname)
 
 
 @app.route('/add_directory', methods=['POST'])
@@ -132,7 +106,7 @@ def addDirectoryHandler():
             user_info = retrieveUserInfo(claims)
             addDirectory(directory_name)
             # adding directory to datastore
-            id = createDirectoryEntity(claims, directory_name)
+            id = createDirectoryEntity(directory_name)
             addDirectoryToUser(user_info, id)
 
         except ValueError as exc:
@@ -140,13 +114,15 @@ def addDirectoryHandler():
     return redirect('/')
 
 
-@app.route('/upload_file', methods=['post'])
-def uploadFileHandler():
+@app.route('/upload_file/<string:dirname>', methods=['POST'])
+def uploadFileHandler(dirname):
     id_token = request.cookies.get("token")
     error_message = None
     claims = None
     times = None
     user_info = None
+    directory = None
+
     if id_token:
         try:
             claims = google.oauth2.id_token.verify_firebase_token(id_token,
@@ -155,7 +131,13 @@ def uploadFileHandler():
             if file.filename == '':
                 return redirect('/')
             user_info = retrieveUserInfo(claims)
-            addFile(file)
+            directory = retrieveDirectoryEntity(user_info)
+            print("test-> ", str(file.filename))
+            filename = str(file.filename)
+            dirname = "/" if dirname == "root" else dirname
+            addFile(file, dirname)
+            createFileEntity(filename, dirname)
+
         except ValueError as exc:
             error_message = str(exc)
     return redirect('/')
@@ -195,6 +177,7 @@ def root():
             if user_info == None:
                 createUserInfo(claims)
                 user_info = retrieveUserInfo(claims)
+                createDirectoryEntity("root")
             blob_list = blobList(None)
             for i in blob_list:
                 if i.name[len(i.name) - 1] == '/':

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Datastore and Firebase Auth Example</title>
+    <title>CSP Assignment</title>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     <link
       type="text/css"
@@ -16,7 +16,7 @@
     />
   </head>
   <body>
-    <h1>Datastore and Firebase Auth Example</h1>
+    <h1>CSP Assignment</h1>
     <div id="firebase-auth-container"></div>
     <button id="sign-out" hidden="true">Sign out</button>
     <div id="login-info" hidden="true">
@@ -29,18 +29,33 @@
         <dd>{{ user_data['email'] }}</dd>
       </dl>
       <form action="/add_directory" method="post">
-        Directory Name: <input type="text" name="dir_name" /><input
+        Directory Name:
+        <input type="text" name="dir_name" placeholder="enter name" /><input
           type="submit"
+          value="Add"
         />
       </form>
-      <form action="/upload_file" method="post" enctype="multipart/form-data">
-        Upload File: <input type="file" name="file_name" /><input
-          type="submit"
-        />
+      <form
+        action="/upload_file/root"
+        method="POST"
+        enctype="multipart/form-data"
+      >
+        Upload File:
+        <input
+          type="file"
+          name="file_name"
+          accept=".docx,.odt,.xslx,.ods"
+        /><input type="submit" value="Upload" />
       </form>
       <h1>list of directories</h1>
       <br />
-      {% for i in directory_list %} {{ i.name }}<br />
+      {% for i in directory_list %}
+      <br />
+      <form action="/enter_directory/{{i.name}}" method="post">
+        <label for="dirname">{{i.name}}</label><br />
+        <input type="submit" name="dirname" value="Go" />
+      </form>
+      <br />
       {% endfor %}
       <h1>list of files</h1>
       <br />
@@ -48,7 +63,13 @@
       <form action="/download_file/{{ i.name }}" method="post">
         {{ i.name }}<input type="submit" /><br />
       </form>
-      {% endfor %} {% elif error_message %}
+      {% endfor %}
+      <form action="/enter_directory" method="post">
+        <label for="dirname">Enter a directory:</label><br />
+        <input type="text" id="dirname" name="dirname" />
+        <input type="submit" value="Go" /><br />
+      </form>
+      {% elif error_message %}
       <p>Error Message: {{ error_message }}</p>
       {% endif %}
     </div>
