@@ -60,7 +60,7 @@
       <h1>list of files</h1>
       <br />
       {% for i in file_list %}
-      <form action="/download_file/{{ i.name }}" method="post">
+      <form action="/handle_file/{{ i.name }}" method="post">
         <input type="submit" value="Delete" />
         {{ i.name }}
         <input type="submit" value="Download" /><br />

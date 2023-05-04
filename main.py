@@ -18,19 +18,21 @@ datastore_client = datastore.Client()
 firebase_request_adapter = requests.Request()
 
 
-def deleteDirectoryEntity(claims, directory_name):
-    user_info = retrieveUserInfo(claims)
-    directory_list_keys = user_info['directory_list']
+@app.route('/delete_file/<string:file_name>', methods=['POST'])
+def deleteFileFromDirectory(file_name):
+    id_token = request.cookies.get("token")
+    error_message = None
+    directory = None
 
-    directory_key = datastore_client.key(
-        'Directory', directory_list_keys[directory_name])
-    datastore_client.delete(directory_key)
+    if id_token:
+        try:
+            claims = google.oauth2.id_token.verify_firebase_token(
+                id_token, firebase_request_adapter)
+            deleteFileEntity(directory, file_name)
+        except ValueError as exc:
+            error_message = str(exc)
 
-    del directory_list_keys[directory_name]
-    user_info.update({
-        'directory_list': directory_list_keys
-    })
-    datastore_client.put(user_info)
+    return redirect('/')
 
 
 @app.route('/enter_directory/<dirname>/', methods=['POST'])
@@ -106,7 +108,7 @@ def uploadFileHandler(dirname):
                 return redirect('/')
             user_info = retrieveUserInfo(claims)
 
-            directory = retrieveDirectoryEntity(dirname+"/")
+            directory = retrieveDirectoryEntity(dirname)
             print("test-> ", directory)
             filename = str(file.filename)
             directory_name = "" if dirname == "root" else dirname+"/"
@@ -119,7 +121,7 @@ def uploadFileHandler(dirname):
     return redirect('/')
 
 
-@app.route('/download_file/<string:filename>', methods=['POST'])
+@app.route('/handle_file/<string:filename>', methods=['POST'])
 def downloadFile(filename):
     id_token = request.cookies.get("token")
     error_message = None
@@ -133,7 +135,9 @@ def downloadFile(filename):
                                                                   firebase_request_adapter)
         except ValueError as exc:
             error_message = str(exc)
-    return Response(downloadBlob(filename), mimetype='application/octet-stream')
+    print("Request-> ", request)
+
+    # return Response(downloadBlob(filename), mimetype='application/octet-stream')
 
 
 @app.route('/')
