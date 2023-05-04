@@ -39,3 +39,19 @@ def retrieveFileEntity(directory):
 
     file_list = datastore_client.get_multi(file_keys)
     return file_list
+
+
+def deleteFileEntity(directory, file_name):
+
+    file_list_keys = directory['file_list']
+
+    file_key = datastore_client.key('File', file_name)
+    datastore_client.delete(file_key)
+
+    del file_list_keys[file_name]
+
+    directory.update({
+        'file_list': file_list_keys
+    })
+
+    datastore_client.put(directory)

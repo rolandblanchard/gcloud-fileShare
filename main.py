@@ -63,32 +63,6 @@ def enterDirectoryHandler(dirname):
                            user_info=user_info, file_list=file_list, directory_list=directory_list, directory_name=dirname)
 
 
-@app.route('/upload_file_dir/<dirname>/', methods=['POST'])
-def uploadFileToDirHandler(dirname):
-    id_token = request.cookies.get("token")
-    error_message = None
-    claims = None
-    times = None
-    user_info = None
-
-    if id_token:
-        try:
-            claims = google.oauth2.id_token.verify_firebase_token(id_token,
-                                                                  firebase_request_adapter)
-            file = request.files['file_name']
-            if file.filename == '':
-                return redirect('/')
-            user_info = retrieveUserInfo(claims)
-            addFile(file, dirname)
-            # adding directory to datastore
-            id = createFileEntity(file.filename)
-            addFileToDirectory(dirname, id)
-        except ValueError as exc:
-            error_message = str(exc)
-    return render_template('directory.html', user_data=claims, error_message=error_message,
-                           user_info=user_info, directory_name=dirname)
-
-
 @app.route('/add_directory', methods=['POST'])
 def addDirectoryHandler():
     id_token = request.cookies.get("token")
@@ -131,12 +105,14 @@ def uploadFileHandler(dirname):
             if file.filename == '':
                 return redirect('/')
             user_info = retrieveUserInfo(claims)
-            directory = retrieveDirectoryEntity(user_info)
-            print("test-> ", str(file.filename))
+
+            directory = retrieveDirectoryEntity(dirname+"/")
+            print("test-> ", directory)
             filename = str(file.filename)
-            dirname = "/" if dirname == "root" else dirname
-            addFile(file, dirname)
+            directory_name = "" if dirname == "root" else dirname+"/"
+            addFile(file, directory_name)
             createFileEntity(filename, dirname)
+            addFileToDirectory(directory, filename)
 
         except ValueError as exc:
             error_message = str(exc)
@@ -178,6 +154,7 @@ def root():
                 createUserInfo(claims)
                 user_info = retrieveUserInfo(claims)
                 createDirectoryEntity("root")
+                addDirectoryToUser(user_info, "root")
             blob_list = blobList(None)
             for i in blob_list:
                 if i.name[len(i.name) - 1] == '/':

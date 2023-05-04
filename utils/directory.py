@@ -34,7 +34,7 @@ def addDirectoryToUser(user_info, directory_name):
     datastore_client.put(user_info)
 
 
-def retrieveDirectoryEntity(user_info):
+def retrieveDirectories(user_info):
     # make key objects out of all the keys and retrieve them
     directory_ids = user_info['directory_list']
     directory_keys = []
@@ -44,3 +44,28 @@ def retrieveDirectoryEntity(user_info):
 
     directory_list = datastore_client.get_multi(directory_keys)
     return directory_list
+
+
+def retrieveDirectoryEntity(directory_name):
+    entity_key = datastore_client.key('Directory', directory_name)
+    entity = datastore_client.get(entity_key)
+    return entity
+
+
+def deleteDirectoryEntity(user_info, directory_name):
+
+    directory_list_keys = user_info['directory_list']
+
+    directory_key = datastore_client.key(
+        'Directory', directory_list_keys[directory_name])
+    if directory_key['file_list'] == []:
+        print("ERROR: Must be empty before deletion")
+        return "Must be empty before deletion"
+
+    datastore_client.delete(directory_key)
+
+    del directory_list_keys[directory_name]
+    user_info.update({
+        'directory_list': directory_list_keys
+    })
+    datastore_client.put(user_info)
