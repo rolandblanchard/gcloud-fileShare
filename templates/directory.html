@@ -13,6 +13,22 @@
       rel="stylesheet"
       href="https://www.gstatic.com/firebasejs/ui/4.4.0/firebase-ui-auth.css"
     />
+    <style>
+      /* Grid container */
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr); /* Three columns */
+        grid-gap: 10px; /* Gap between cells */
+      }
+
+      /* Grid item */
+      .grid-item {
+        background-color: #f2f2f2;
+        padding: 20px;
+        text-align: center;
+        font-size: 16px;
+    }
+  </style>
   </head>
   <body>
     <h1>Datastore and Firebase Auth Example</h1>
@@ -26,14 +42,7 @@
         <dd>{{ user_data['name'] }}</dd>
       </dl>
       <div>Currently in: {{directory_name}}</div>
-    </br>
-      <form action="/add_directory" method="post">
-        Directory Name:
-        <input type="text" name="dir_name" placeholder="enter name" /><input
-          type="submit"
-          value="Add"
-        />
-      </form>
+      </br>
       <form action="/upload_file/{{directory_name}}" method="POST" enctype="multipart/form-data">
         Upload File:
         <input
@@ -42,22 +51,19 @@
           accept=".docx,.odt,.xslx,.ods"
         /><input type="submit" value="Upload" />
       </form>
-      <h1>list of directories</h1>
-      <br />
-      {% for i in directory_list %}
-      <br />
-      <form action="/enter_directory/{{i.name}}" method="post">
-        <label for="dirname">{{i.name}}</label><br />
-        <input type="submit" name="dirname" value="Go" />
-      </form>
-      {% endfor %}
       <h1>list of files</h1>
       <br />
-      {% for i in file_list %}
-      <form action="/download_file/{{ i.name }}" method="post">
-        {{ i.name }}<input type="submit" /><br />
+      {% for file in file_list %}
+      <form action="/download_file/{{ file }}" method="post">
+        {{ file }}<input type="submit" /><br />
       </form>
       {% endfor %}
+      <div class="grid-container">
+    <!-- Grid items (replace with your filenames) -->
+        {% for file in file_list %}
+        <div class="grid-item">{{ file }}</div>
+        {% endfor %}
+      </div>
 
       {% elif error_message %}
       <p>Error Message: {{ error_message }}</p>

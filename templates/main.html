@@ -49,23 +49,43 @@
       </form>
       <h1>list of directories</h1>
       <br />
-      {% for i in directory_list %}
+      {% for directory in directory_list %}
       <br />
-      <form action="/enter_directory/{{i.name}}" method="post">
-        <label for="dirname">{{i.name}}</label><br />
+      <form action="/enter_directory/{{directory}}" method="post">
+        <label for="dirname">{{directory}}</label><br />
         <input type="submit" name="dirname" value="Go" />
       </form>
       <br />
       {% endfor %}
-      <h1>list of files</h1>
-      <br />
-      {% for i in file_list %}
-      <form action="/handle_file/{{ i.name }}" method="post">
-        <input type="submit" value="Delete" />
-        {{ i.name }}
-        <input type="submit" value="Download" /><br />
-      </form>
-      {% endfor %} {% elif error_message %}
+      <table>
+        <tr>
+          <th>Number</th>
+          <th>Name</th>
+          <th>Format</th>
+          <th>Date added</th>
+          <th>Date Last Modified</th>
+          <th>Location</th>
+        </tr>
+        {% for i in range(file_list_size)%}
+
+        <tr>
+          <td>{{i}}</td>
+          <td>
+            <form action="/handle_file/{{ file_list[i] }}" method="post">
+              <input type="submit" value="Delete" />
+              {{ file_list[i] }}
+              <input type="submit" value="Download" />
+            </form>
+          </td>
+          <td>{{files[i]['format']}}</td>
+          <td class="date">{{files[i]['date_added']}}</td>
+          <td class="date">{{files[i]['last_modified']}}</td>
+          <td>{{files[i]['path']}}</td>
+        </tr>
+        {%endfor%}
+      </table>
+
+      {% elif error_message %}
       <p>Error Message: {{ error_message }}</p>
       {% endif %}
     </div>

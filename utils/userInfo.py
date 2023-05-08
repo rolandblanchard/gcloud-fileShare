@@ -5,10 +5,8 @@ import google.oauth2.id_token
 from google.auth.transport import requests
 from google.cloud import datastore, storage
 from flask import Flask, render_template, request, redirect, Response
-app = Flask(__name__)
-datastore_client = datastore.Client()
 
-firebase_request_adapter = requests.Request()
+datastore_client = datastore.Client()
 
 
 def createUserInfo(claims):
@@ -26,3 +24,15 @@ def retrieveUserInfo(claims):
     entity_key = datastore_client.key('UserInfo', claims['email'])
     entity = datastore_client.get(entity_key)
     return entity
+
+
+def getDirectoryList(claims, dirname):
+
+    entity = retrieveUserInfo(claims)
+    dirs = entity['directory_list']
+
+    if (dirname != ""):
+        dirs.remove(dirname)
+        return dirs
+
+    return dirs

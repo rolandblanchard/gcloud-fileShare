@@ -3,11 +3,7 @@ from google.auth.transport import requests
 from google.cloud import datastore, storage
 from flask import Flask, render_template, request, redirect, Response
 
-
-app = Flask(__name__)
 datastore_client = datastore.Client()
-
-firebase_request_adapter = requests.Request()
 
 
 def createDirectoryEntity(directory_name):
@@ -52,20 +48,29 @@ def retrieveDirectoryEntity(directory_name):
     return entity
 
 
+def getFileList(directory_name):
+
+    files = retrieveDirectoryEntity(directory_name)
+    return files['file_list']
+
+
 def deleteDirectoryEntity(user_info, directory_name):
 
     directory_list_keys = user_info['directory_list']
 
     directory_key = datastore_client.key(
         'Directory', directory_list_keys[directory_name])
-    if directory_key['file_list'] == []:
+    if directory_key['file_list'] != []:
         print("ERROR: Must be empty before deletion")
-        return "Must be empty before deletion"
+        return False
 
     datastore_client.delete(directory_key)
 
     del directory_list_keys[directory_name]
+
     user_info.update({
         'directory_list': directory_list_keys
     })
     datastore_client.put(user_info)
+
+    return True

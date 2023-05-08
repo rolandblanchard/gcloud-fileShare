@@ -5,10 +5,8 @@ import google.oauth2.id_token
 from google.auth.transport import requests
 from google.cloud import datastore, storage
 from flask import Flask, render_template, request, redirect, Response
-app = Flask(__name__)
-datastore_client = datastore.Client()
 
-firebase_request_adapter = requests.Request()
+datastore_client = datastore.Client()
 
 
 def blobList(prefix):
@@ -36,3 +34,17 @@ def downloadBlob(filename):
     bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
     blob = bucket.blob(filename)
     return blob.download_as_bytes()
+
+
+def deleteFileBlob(directory_name, filename):
+    file = None
+    if directory_name == 'root':
+        file = filename
+    else:
+        file = directory_name + '/' + filename
+
+    storage_client = storage.Client(project=local_constants.PROJECT_NAME)
+    bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
+    blob = bucket.blob(file)
+
+    return blob.delete()
