@@ -48,3 +48,17 @@ def deleteFileBlob(directory_name, filename):
     blob = bucket.blob(file)
 
     return blob.delete()
+
+
+def deleteDirectoryBlob(directory_name):
+    file = None
+    if directory_name == 'root':
+        return False
+
+    storage_client = storage.Client(project=local_constants.PROJECT_NAME)
+    bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
+    blob = bucket.blob(directory_name+'/')
+
+    blob.delete()
+
+    return True

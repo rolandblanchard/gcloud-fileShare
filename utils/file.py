@@ -68,7 +68,6 @@ def deleteFile(file_name):
 
     file_key = datastore_client.key(
         'File', file_name)
-    print(file_key)
 
     datastore_client.delete(file_key)
 

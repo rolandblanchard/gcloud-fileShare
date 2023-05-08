@@ -3,6 +3,8 @@ from google.auth.transport import requests
 from google.cloud import datastore, storage
 from flask import Flask, render_template, request, redirect, Response
 
+from utils.bucket import deleteDirectoryBlob
+
 datastore_client = datastore.Client()
 
 
@@ -54,23 +56,29 @@ def getFileList(directory_name):
     return files['file_list']
 
 
-def deleteDirectoryEntity(user_info, directory_name):
+def deleteDirectory(user_info, directory_name):
 
-    directory_list_keys = user_info['directory_list']
+    if directory_name == 'root':
+        return False
 
-    directory_key = datastore_client.key(
-        'Directory', directory_list_keys[directory_name])
-    if directory_key['file_list'] != []:
+    directory_list = user_info['directory_list']
+
+    directory = retrieveDirectoryEntity(directory_name)
+
+    if directory['file_list'] != []:
         print("ERROR: Must be empty before deletion")
         return False
 
-    datastore_client.delete(directory_key)
+    datastore_client.delete(directory)
 
-    del directory_list_keys[directory_name]
+    directory_list.remove(directory_name)
 
     user_info.update({
-        'directory_list': directory_list_keys
+        'directory_list': directory_list
     })
+
     datastore_client.put(user_info)
+
+    deleteDirectoryBlob(directory_name)
 
     return True
