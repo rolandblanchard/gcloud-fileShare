@@ -58,7 +58,7 @@
         <tr>
           <td>{{i}}</td>
           <td>
-            <form action="/delete_file/{{ files[i]['name'] }}" method="post">
+            <form action="/delete_file/{{ files[i]['key'] }}" method="post">
               <input type="submit" value="Delete" />
               {{ files[i]['name'] }}
             </form>

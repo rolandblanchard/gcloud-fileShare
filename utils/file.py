@@ -6,6 +6,7 @@ from flask import Flask, render_template, request, redirect, Response
 
 from utils.bucket import deleteFileBlob
 from utils.directory import retrieveDirectoryEntity
+from utils.helper import getEntityById
 
 datastore_client = datastore.Client()
 
@@ -65,24 +66,28 @@ def getFileEntity(directory, file_name):
     return None
 
 
-def deleteFile(user_info, file_name):
+def deleteFile(user_info, file_key):
 
-    directory = retrieveDirectoryEntity(user_info, file_path)
+    print(user_info, "~", file_key)
+
+    file = getEntityById('File', file_key)
+    print('dir of file: ', file)
+
+    file_path = file['path']
+    directory_name = file_path.split('/')[-2]
+    print('dir of file: ', directory_name)
+
+    directory = retrieveDirectoryEntity(user_info, directory_name)
 
     # get file path to get directory
-    file = getFileEntity(file_name)
-    file_path = file['path']
 
     print(directory)
 
     file_list = directory['file_list']
 
-    file_key = datastore_client.key(
-        'File', file_name)
+    datastore_client.delete(file.key)
 
-    datastore_client.delete(file_key)
-
-    file_list.remove(file_name)
+    file_list.remove(file_key)
 
     directory.update({
         'file_list': file_list
@@ -90,4 +95,4 @@ def deleteFile(user_info, file_name):
 
     datastore_client.put(directory)
 
-    deleteFileBlob(file_path, file_name)
+    deleteFileBlob(file)

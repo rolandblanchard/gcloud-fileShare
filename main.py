@@ -12,17 +12,13 @@ from utils.directory import *
 from utils.file import *
 from utils.bucket import *
 from utils.versions import *
+from utils.helper import *
 
 
 app = Flask(__name__)
 datastore_client = datastore.Client()
 
 firebase_request_adapter = requests.Request()
-
-
-def getEntityById(type, id):
-    key = datastore_client.key(type, id)
-    return datastore_client.get(key)
 
 
 @app.route('/versions/<string:file_name>', methods=['POST'])
@@ -148,8 +144,8 @@ def uploadFileHandler(key):
     return redirect('/')
 
 
-@app.route('/delete_file/<string:filename>', methods=['POST'])
-def deleteFileHandle(filename):
+@app.route('/delete_file/<filekey>', methods=['POST'])
+def deleteFileHandle(filekey):
     id_token = request.cookies.get("token")
     error_message = None
     claims = None
@@ -161,7 +157,8 @@ def deleteFileHandle(filename):
             claims = google.oauth2.id_token.verify_firebase_token(id_token,
                                                                   firebase_request_adapter)
             user_info = retrieveUserInfo(claims)
-            deleteFile(user_info, filename)
+
+            deleteFile(user_info, filekey)
 
         except ValueError as exc:
             error_message = str(exc)

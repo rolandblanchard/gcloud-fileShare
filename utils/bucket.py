@@ -37,16 +37,11 @@ def downloadBlob(filename):
     return blob.download_as_bytes()
 
 
-def deleteFileBlob(directory_name, filename):
-    file = None
-    if directory_name == 'root':
-        file = filename
-    else:
-        file = directory_name + '/' + filename
+def deleteFileBlob(file):
 
     storage_client = storage.Client(project=local_constants.PROJECT_NAME)
     bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
-    blob = bucket.blob(file)
+    blob = bucket.blob(file['path']+file['name'])
 
     return blob.delete()
 
