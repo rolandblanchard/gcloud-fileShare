@@ -13,9 +13,11 @@ def createUserInfo(claims):
     entity_key = datastore_client.key('UserInfo', claims['email'])
     entity = datastore.Entity(key=entity_key)
     entity.update({
+        'user_id': claims['user_id'],
         'email': claims['email'],
         'name': claims['name'],
-        'directory_list': []
+        'directory_list': [],
+        'root_key': ""
     })
     datastore_client.put(entity)
 

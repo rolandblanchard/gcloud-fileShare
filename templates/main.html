@@ -36,7 +36,7 @@
         />
       </form>
       <form
-        action="/upload_file/root"
+        action="/upload_file/{{dir_key}}"
         method="POST"
         enctype="multipart/form-data"
       >
@@ -49,18 +49,19 @@
       </form>
       <h1>list of directories</h1>
       <br />
-      {% for directory in directory_list %}
+      {% for directory in directories %} {% if directory['name'] !=
+      user_data['user_id']%}
       <br />
-      <form action="/delete_directory/{{directory}}" method="post">
+      <form action="/delete_directory/{{directory['key']}}" method="post">
         <input type="submit" name="delete" value="delete" />
       </form>
-      {{directory}}
-      <form action="/enter_directory/{{directory}}" method="post">
+      {{directory['name']}}
+      <form action="/enter_directory/{{directory['key']}}" method="post">
         <input type="submit" name="go" value="Go" />
       </form>
       <br />
-      {% endfor %}
-      <h1>Files in {{current_directory}}</h1>
+      {%endif%} {% endfor %}
+      <h1>Files in home Folder</h1>
       <br />
       <table>
         <tr>
@@ -71,23 +72,23 @@
           <th>Date Last Modified</th>
           <th>Location</th>
         </tr>
-        {% for i in range(file_list_size)%}
+        {% for file in files%}
 
         <tr>
-          <td>{{i}}</td>
+          <td>{{1}}</td>
           <td>
-            <form action="/delete_file/{{ file_list[i] }}" method="post">
+            <form action="/delete_file/{{ file['key'] }}" method="post">
               <input type="submit" value="Delete" />
-              {{ file_list[i] }}
+              {{ file['name'] }}
             </form>
-            <form action="/versions/{{ file_list[i] }}" method="post">
+            <form action="/versions/{{ file['key'] }}" method="post">
               <input type="submit" value="Versions" />
             </form>
           </td>
-          <td>{{files[i]['format']}}</td>
-          <td class="date">{{files[i]['date_added']}}</td>
-          <td class="date">{{files[i]['last_modified']}}</td>
-          <td>{{files[i]['path']}}</td>
+          <td>{{file['format']}}</td>
+          <td class="date">{{file['date_added']}}</td>
+          <td class="date">{{file['last_modified']}}</td>
+          <td>{{file['path']}}</td>
         </tr>
         {%endfor%}
       </table>

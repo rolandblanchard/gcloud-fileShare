@@ -1,3 +1,4 @@
+import uuid
 import datetime
 from google.auth.transport import requests
 from google.cloud import datastore, storage
@@ -9,12 +10,15 @@ from utils.directory import retrieveDirectoryEntity
 datastore_client = datastore.Client()
 
 
-def createFileEntity(file_name, path):
+def createFileEntity(user_id, file_name, path):
+    key = uuid.uuid4().hex
     now = datetime.datetime.now()
     format = file_name.split(".")[-1]
-    entity_key = datastore_client.key('File', file_name)
+    entity_key = datastore_client.key('File', key)
     entity = datastore.Entity(key=entity_key)
     entity.update({
+        'key': key,
+        'user_id': user_id,
         'name': file_name,
         'format': format,
         'versions': [],
@@ -25,12 +29,14 @@ def createFileEntity(file_name, path):
 
     datastore_client.put(entity)
 
-    return file_name
+    return key
 
 
-def addFileToDirectory(directory, file_name):
+def addFileToDirectory(directory, key):
+
     file_keys = directory['file_list']
-    file_keys.append(file_name)
+
+    file_keys.append(key)
     directory.update({
         'file_list': file_keys
     })
@@ -49,19 +55,24 @@ def retrieveFileEntities(directory):
     return file_list
 
 
-def getFileEntity(file_name):
-    entity_key = datastore_client.key('File', file_name)
-    entity = datastore_client.get(entity_key)
-    return entity
+def getFileEntity(directory, file_name):
+
+    files = retrieveFileEntities(directory)
+    for entity in files:
+        if entity['name'] == file_name:
+            return entity
+
+    return None
 
 
-def deleteFile(file_name):
+def deleteFile(user_info, file_name):
+
+    directory = retrieveDirectoryEntity(user_info, file_path)
 
     # get file path to get directory
     file = getFileEntity(file_name)
     file_path = file['path']
 
-    directory = retrieveDirectoryEntity(file_path)
     print(directory)
 
     file_list = directory['file_list']
@@ -80,22 +91,3 @@ def deleteFile(file_name):
     datastore_client.put(directory)
 
     deleteFileBlob(file_path, file_name)
-
-
-def deleteFileEntity(directory, file_name):
-
-    file_list = directory['file_list']
-
-    file_key = datastore_client.key(
-        'File', file_name)
-
-    datastore_client.delete(file_key)
-
-    file_list.remove(file_name)
-
-    directory.update({
-        'file_list': file_list
-    })
-    datastore_client.put(directory)
-
-    return True

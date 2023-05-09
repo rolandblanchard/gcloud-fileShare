@@ -31,7 +31,7 @@
       <div>Currently in: {{current_directory}}</div>
       </br>
       <form
-        action="/upload_file/{{current_directory}}"
+        action="/upload_file/{{dir_key}}"
         method="POST"
         enctype="multipart/form-data"
       >
@@ -58,11 +58,11 @@
         <tr>
           <td>{{i}}</td>
           <td>
-            <form action="/delete_file/{{ file_list[i] }}" method="post">
+            <form action="/delete_file/{{ files[i]['name'] }}" method="post">
               <input type="submit" value="Delete" />
-              {{ file_list[i] }}
+              {{ files[i]['name'] }}
             </form>
-            <form action="/versions/{{ file_list[i] }}" method="post">
+            <form action="/versions/{{ files[i]['name'] }}" method="post">
               <input type="submit" value="Versions" />
             </form>
           </td>
