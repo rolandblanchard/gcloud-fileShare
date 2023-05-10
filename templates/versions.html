@@ -35,7 +35,7 @@
         <tr>
           <td>
             <form
-              action="/delete_file/{{ version['generation'] }}"
+              action="/delete_version/{{ file['key'] }}/{{version['generation']}}"
               method="post"
             >
               <input type="submit" value="Delete" />

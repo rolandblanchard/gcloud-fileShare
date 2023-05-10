@@ -21,7 +21,7 @@ datastore_client = datastore.Client()
 firebase_request_adapter = requests.Request()
 
 
-@app.route('/download/<filekey>/<generation>', methods=['GET', 'POST'])
+@app.route('/download/<filekey>/<generation>', methods=['POST'])
 def downloadVersionHandler(filekey, generation):
 
     file = getEntityById('File', filekey)
@@ -35,6 +35,46 @@ def downloadVersionHandler(filekey, generation):
             'Content-Disposition': f'attachment;filename={file["name"]}'
         }
     )
+
+
+@app.route('/delete_version/<filekey>/<generation>', methods=['POST'])
+def deleteVersioningHandler(filekey, generation):
+    id_token = request.cookies.get("token")
+    error_message = None
+    directory = None
+    file = None
+    current_directory = ""
+    version_count = 0
+    version_list = []
+    file_path = ""
+
+    if id_token:
+        try:
+            claims = google.oauth2.id_token.verify_firebase_token(
+                id_token, firebase_request_adapter)
+
+            file = getEntityById('File', filekey)
+
+            directory = getEntityById('Directory', file['root'])
+            current_directory = directory['name']
+
+            versions = getBlobVersions(file)
+
+            version_count = len(list(versions))
+
+            version_list = file['versions']
+
+            file_path = file['path']+file['name']
+            print("deleting version entity- ", generation)
+
+            if deleteVersionEntity(file, generation):
+                print("deleting blob version")
+                deleteBlobVersion(file_path, generation)
+
+        except ValueError as exc:
+            error_message = str(exc)
+
+    return render_template('versions.html', user_data=claims, error_message=error_message, file=file, current_directory=current_directory, version_count=version_count, version_list=version_list)
 
 
 @app.route('/versions/<file_id>', methods=['POST'])

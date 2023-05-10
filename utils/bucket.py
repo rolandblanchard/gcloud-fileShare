@@ -190,13 +190,13 @@ def enable_versioning():
             f"Versioning has been enabled for bucket {local_constants.PROJECT_STORAGE_BUCKET}")
 
 
-def getBlobVersion(blob_name, generation):
+def deleteBlobVersion(blob_name, generation):
 
     storage_client = storage.Client(project=local_constants.PROJECT_NAME)
     bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
     blob = bucket.blob(blob_name, generation=generation)
 
-    return blob
+    blob.delete()
 
 
 def downloadBlobVersion(blob_name, generation):
