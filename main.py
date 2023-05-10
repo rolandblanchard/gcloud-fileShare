@@ -67,9 +67,13 @@ def deleteVersioningHandler(filekey, generation):
             file_path = file['path']+file['name']
             print("deleting version entity- ", generation)
 
-            if deleteVersionEntity(file, generation):
-                print("deleting blob version")
+            updated_size = deleteVersionEntity(file, generation)
+
+            if updated_size > 0:
+
+                print("deleting blob version of size", updated_size)
                 deleteBlobVersion(file_path, generation)
+                updateMemory(directory, -updated_size)
 
         except ValueError as exc:
             error_message = str(exc)
@@ -122,6 +126,8 @@ def enterDirectoryHandler(dirname):
     directory = None
     root = None
     directory_name = None
+    dir_mem = 0
+    memory = 0
 
     if id_token:
         try:
@@ -135,13 +141,19 @@ def enterDirectoryHandler(dirname):
 
             files = retrieveFileEntities(directory)
 
+            collectMemory(user_info)
+
+            dir_mem = directory['size']
+
+            memory = user_info['size']
+
         except ValueError as exc:
             error_message = str(exc)
 
     return render_template('directory.html', user_data=claims, error_message=error_message,
                            user_info=user_info, file_list_size=len(
                                files),
-                           files=files, current_directory=directory_name, dir_key=root)
+                           files=files, current_directory=directory_name, dir_key=root, dir_mem=dir_mem, memory=memory)
 
 
 @app.route('/add_directory', methods=['POST'])
@@ -178,6 +190,7 @@ def uploadFileHandler(key):
     times = None
     user_info = None
     directory = None
+    file_size = 0
 
     if id_token:
         try:
@@ -200,6 +213,7 @@ def uploadFileHandler(key):
             file_found = findFile(directory, filename)
 
             file_added = addFileBlob(file, directory_name)
+            file_size = file_added.size
 
             if file_found != None:
                 # create version from old_file
@@ -220,6 +234,10 @@ def uploadFileHandler(key):
                     claims['user_id'], filename, directory['key'], directory_name, file_added)
 
                 addFileToDirectory(directory, id)
+
+            # Update memory usage in directory
+            print('updating memory, increasing by ', file_size)
+            updateMemory(directory, file_size)
 
         except ValueError as exc:
             error_message = str(exc)
@@ -279,6 +297,7 @@ def root():
     root = None
     files = []
     root_id = None
+    memory = 0
 
     if id_token:
         try:
@@ -312,13 +331,17 @@ def root():
             print('Files: ', files)
             root_id = root['key']
 
+            collectMemory(user_info)
+
+            memory = user_info['size']
+
         except ValueError as exc:
             error_message = str(exc)
 
     return render_template('main.html', user_data=claims, error_message=error_message,
                            user_info=user_info, file_list_size=len(
                                files),
-                           files=files, directories=directories, dir_key=root_id)
+                           files=files, directories=directories, dir_key=root_id, memory=memory)
 
 
 if __name__ == '__main__':

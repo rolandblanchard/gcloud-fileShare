@@ -47,6 +47,7 @@
           accept=".docx,.odt,.xslx,.ods"
         /><input type="submit" value="Upload" />
       </form>
+      <h2>Memory used: {{memory}}</h2>
       <h1>list of directories</h1>
       <br />
       {% for directory in directories %} {% if directory['name'] !=
@@ -65,7 +66,7 @@
       <br />
       <table>
         <tr>
-          <th>Number</th>
+          <th>Size</th>
           <th>Name</th>
           <th>Format</th>
           <th>Date added</th>
@@ -75,7 +76,7 @@
         {% for file in files%}
 
         <tr>
-          <td>{{1}}</td>
+          <td>{{file['size']}}</td>
           <td>
             <form action="/delete_file/{{ file['key'] }}" method="post">
               <input type="submit" value="Delete" />

@@ -61,8 +61,9 @@ def deleteFileBlob(file):
     storage_client = storage.Client(project=local_constants.PROJECT_NAME)
     bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
     blob = bucket.blob(file['path']+file['name'])
+    blob.delete()
 
-    return blob.delete()
+    return blob
 
 
 ''' Deletes a directory blob '''
@@ -195,8 +196,10 @@ def deleteBlobVersion(blob_name, generation):
     storage_client = storage.Client(project=local_constants.PROJECT_NAME)
     bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
     blob = bucket.blob(blob_name, generation=generation)
+    blob_size = blob.size
 
-    blob.delete()
+    if blob.delete() == None:
+        return blob_size
 
 
 def downloadBlobVersion(blob_name, generation):
@@ -206,3 +209,13 @@ def downloadBlobVersion(blob_name, generation):
     blob = bucket.blob(blob_name, generation=generation)
 
     return blob.download_as_bytes()
+
+
+def getUserMemoryUsage(user_id):
+    storage_client = storage.Client(project=local_constants.PROJECT_NAME)
+    bucket = storage_client.get_bucket(local_constants.PROJECT_STORAGE_BUCKET)
+
+    blob = bucket.get_blob(user_id)
+    print("memory blob ", blob, user_id)
+
+    return blob.size

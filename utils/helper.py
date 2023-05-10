@@ -22,3 +22,11 @@ def parseSafeUrl(url):
 def getEntityById(type, id):
     key = datastore_client.key(type, id)
     return datastore_client.get(key)
+
+
+def format_size(size):
+    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if size < 1024.0:
+            return "{:.2f} {}".format(size, unit)
+        size /= 1024.0
+    return "{:.2f} PB".format(size)

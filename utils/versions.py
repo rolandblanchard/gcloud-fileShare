@@ -19,7 +19,8 @@ def createVersionEntity(fileBlob):
         'time_created': fileBlob.time_created,
         'path': "",
         'version_of': "",
-        'generation': fileBlob.generation
+        'generation': fileBlob.generation,
+        'size': fileBlob.size
     })
 
     return entity
@@ -45,12 +46,13 @@ def addVersionToFile(old_file, version):
 
 
 def deleteVersionEntity(file, generation):
-
+    size = 0
     for version in file['versions']:
         print('version-', version['generation'])
         if version['generation'] == int(generation):
             print('found')
+            size = int(version['size'])
             file['versions'].remove(version)
             datastore_client.put(file)
-            return True
-    return False
+            return size
+    return size

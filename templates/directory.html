@@ -42,11 +42,12 @@
           accept=".docx,.odt,.xslx,.ods"
         /><input type="submit" value="Upload" />
       </form>
+      <h2>Memory used: {{dir_mem}} of {{ memory }} used</h2>
       <h1>Files in {{current_directory}}</h1>
       <br />
       <table>
         <tr>
-          <th>Number</th>
+          <th>Size</th>
           <th>Name</th>
           <th>Format</th>
           <th>Date added</th>
@@ -56,7 +57,7 @@
         {% for i in range(file_list_size)%}
 
         <tr>
-          <td>{{i}}</td>
+          <td>{{files[i]['size']}}</td>
           <td>
             <form action="/delete_file/{{ files[i]['key'] }}" method="post">
               <input type="submit" value="Delete" />

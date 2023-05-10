@@ -5,7 +5,7 @@ from google.cloud import datastore, storage
 from flask import Flask, render_template, request, redirect, Response
 
 from utils.bucket import deleteFileBlob
-from utils.directory import retrieveDirectoryEntity
+from utils.directory import retrieveDirectoryEntity, updateMemory
 from utils.helper import getEntityById
 
 datastore_client = datastore.Client()
@@ -26,7 +26,8 @@ def createFileEntity(user_id, file_name, root, path, file_blob):
         'date_added': file_blob.time_created,
         'last_modified': file_blob.time_created,
         'root': root,
-        'path': path
+        'path': path,
+        'size': file_blob.size
     })
 
     datastore_client.put(entity)
@@ -67,12 +68,20 @@ def getFileEntity(directory, file_name):
     return None
 
 
+def getAllFileMemory(file):
+    sum = int(file['size'])
+    for version in file['versions']:
+        sum += int(version['size'])
+    return sum
+
+
 def deleteFile(user_info, file_key):
 
     print(user_info, "~", file_key)
 
     file = getEntityById('File', file_key)
     print('dir of file: ', file)
+    file_size = getAllFileMemory(file)
 
     file_path = file['path']
     directory_name = file_path.split('/')[-2]
@@ -82,21 +91,24 @@ def deleteFile(user_info, file_key):
 
     # get file path to get directory
 
-    print(directory)
-
     file_list = directory['file_list']
 
     datastore_client.delete(file.key)
 
     file_list.remove(file_key)
 
+    updated_size = int(directory['size']) - file_size
+
     directory.update({
-        'file_list': file_list
+        'file_list': file_list,
+        'size': updated_size
     })
 
     datastore_client.put(directory)
 
     deleteFileBlob(file)
+
+    # remove memory
 
 
 def findFile(directory, file_name):

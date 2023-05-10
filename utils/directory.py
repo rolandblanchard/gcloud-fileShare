@@ -18,7 +18,8 @@ def createDirectoryEntity(user_id, directory_name):
         'user_id': user_id,
         'name': directory_name,
         'subDirectories': [],
-        'file_list': []
+        'file_list': [],
+        'size': 0
     })
 
     datastore_client.put(entity)
@@ -89,3 +90,25 @@ def deleteDirectory(user_info, directory_name):
     deleteDirectoryBlob(directory_name)
 
     return True
+
+
+def updateMemory(directory, file_size):
+    current = int(directory['size']) + int(file_size)
+
+    directory.update({
+        'size': current
+    })
+
+    datastore_client.put(directory)
+
+
+def collectMemory(user_info):
+    directory_list = retrieveDirectories(user_info)
+    sum = 0
+    for directory in directory_list:
+        sum += int(directory['size'])
+
+    user_info.update({
+        'size': sum
+    })
+    datastore_client.put(user_info)

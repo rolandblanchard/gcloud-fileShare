@@ -17,7 +17,8 @@ def createUserInfo(claims):
         'email': claims['email'],
         'name': claims['name'],
         'directory_list': [],
-        'root_key': ""
+        'root_key': "",
+        'size': 0
     })
     datastore_client.put(entity)
 
