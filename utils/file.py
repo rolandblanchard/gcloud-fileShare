@@ -11,7 +11,7 @@ from utils.helper import getEntityById
 datastore_client = datastore.Client()
 
 
-def createFileEntity(user_id, file_name, path, file_blob):
+def createFileEntity(user_id, file_name, root, path, file_blob):
     key = uuid.uuid4().hex
     format = file_name.split(".")[-1]
     entity_key = datastore_client.key('File', key)
@@ -25,6 +25,7 @@ def createFileEntity(user_id, file_name, path, file_blob):
         'current_version': "",
         'date_added': file_blob.time_created,
         'last_modified': file_blob.time_created,
+        'root': root,
         'path': path
     })
 

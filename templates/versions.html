@@ -16,34 +16,41 @@
   </head>
   <body>
     <div>
-      <h1>File versions</h1>
+      <h1>File versioning</h1>
+      <h2>{{file['name']}} in {{current_directory}}</h2>
+      <h3>Total versions {{version_count}}</h3>
+      <br />
+      <form action="/">
+        <input type="submit" value="Home" />
+      </form>
       <br />
       <table>
         <tr>
-          <th>Number</th>
-          <th>Name</th>
-          <th>Format</th>
           <th>Date added</th>
           <th>Version of</th>
-          <th>Location</th>
+          <th>Name</th>
         </tr>
         {% for version in file['versions']%}
 
         <tr>
-          <td>{{i}}</td>
           <td>
-            <form action="/delete_file/{{ version['key'] }}" method="post">
+            <form
+              action="/delete_file/{{ version['generation'] }}"
+              method="post"
+            >
               <input type="submit" value="Delete" />
-              {{ version['name'] }}
+              {{ version['time_created'] }}
             </form>
-            <form action="/versions/{{ version['key'] }}" method="post">
-              <input type="submit" value="Versions" />
+            <form
+              action="/download/{{ file['key'] }}/{{version['generation']}}"
+              method="post"
+            >
+              <input type="submit" value="Download" />
             </form>
           </td>
-          <td>{{version['format']}}</td>
-          <td class="date">{{version['date_added']}}</td>
-          <td class="date">{{version['version_of']}}</td>
-          <td>{{version['path']}}</td>
+
+          <td class="generation">{{version['generation']}}</td>
+          <td class="date">{{file['name']}}</td>
         </tr>
         {%endfor%}
       </table>

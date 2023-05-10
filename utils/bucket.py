@@ -104,11 +104,6 @@ def getBlob(file):
         return None
 
 
-def addVersion(directory_name, file):
-
-    return True
-
-
 ''' Moves any blob to a new versions folder'''
 # Unused
 
@@ -193,3 +188,21 @@ def enable_versioning():
         bucket.patch()
         print(
             f"Versioning has been enabled for bucket {local_constants.PROJECT_STORAGE_BUCKET}")
+
+
+def getBlobVersion(blob_name, generation):
+
+    storage_client = storage.Client(project=local_constants.PROJECT_NAME)
+    bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
+    blob = bucket.blob(blob_name, generation=generation)
+
+    return blob
+
+
+def downloadBlobVersion(blob_name, generation):
+
+    storage_client = storage.Client(project=local_constants.PROJECT_NAME)
+    bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
+    blob = bucket.blob(blob_name, generation=generation)
+
+    return blob.download_as_bytes()

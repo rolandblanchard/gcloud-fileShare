@@ -5,7 +5,7 @@ import urllib.parse
 import google.oauth2.id_token
 from google.auth.transport import requests
 from google.cloud import datastore, storage
-from flask import Flask, render_template, request, redirect, Response, url_for
+from flask import Flask, render_template, request, redirect, Response, url_for, send_file
 
 from utils.userInfo import *
 from utils.directory import *
@@ -21,12 +21,31 @@ datastore_client = datastore.Client()
 firebase_request_adapter = requests.Request()
 
 
+@app.route('/download/<filekey>/<generation>', methods=['GET', 'POST'])
+def downloadVersionHandler(filekey, generation):
+
+    file = getEntityById('File', filekey)
+    file_path = file['path']+file['name']
+
+    # downloads the file formatting
+    return Response(
+        downloadBlobVersion(file_path, generation),
+        mimetype='application/octet-stream',
+        headers={
+            'Content-Disposition': f'attachment;filename={file["name"]}'
+        }
+    )
+
+
 @app.route('/versions/<file_id>', methods=['POST'])
-def deleteFileFromDirectory(file_id):
+def enterVersioningHandler(file_id):
     id_token = request.cookies.get("token")
     error_message = None
     directory = None
     file = None
+    current_directory = ""
+    version_count = 0
+    version_list = []
 
     if id_token:
         try:
@@ -34,16 +53,23 @@ def deleteFileFromDirectory(file_id):
                 id_token, firebase_request_adapter)
 
             file = getEntityById('File', file_id)
-            print("file versions: ", file['versions'])
-            versions = getBlobVersions(file['path']+file['name'])
-            print("versions: ", versions)
-            for v in versions:
-                print(v.name, v.generation, v.time_created)
+            print("Entering versioning for: ", file['name'])
+
+            directory = getEntityById('Directory', file['root'])
+            current_directory = directory['name']
+
+            versions = getBlobVersions(file)
+
+            version_count = len(list(versions))
+
+            version_list = file['versions']
+
+            print("versions found: ", version_count)
 
         except ValueError as exc:
             error_message = str(exc)
 
-    return render_template('versions.html', user_data=claims, error_message=error_message, file=file)
+    return render_template('versions.html', user_data=claims, error_message=error_message, file=file, current_directory=current_directory, version_count=version_count, version_list=version_list)
 
 
 @app.route('/enter_directory/<dirname>', methods=['POST'])
@@ -151,7 +177,7 @@ def uploadFileHandler(key):
             else:
 
                 id = createFileEntity(
-                    claims['user_id'], filename, directory_name, file_added)
+                    claims['user_id'], filename, directory['key'], directory_name, file_added)
 
                 addFileToDirectory(directory, id)
 
