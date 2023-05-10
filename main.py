@@ -68,7 +68,7 @@ def enterSharedHandler():
             shared = retrieveDirectoryEntity(user_info, 'shared')
             print('shared: ', shared)
 
-            for key in shared[file_list]:
+            for key in shared['file_list']:
                 file_list.append(getEntityById('File', key))
 
         except ValueError as exc:
@@ -399,13 +399,13 @@ def root():
                 })
                 datastore_client.put(user_info)
 
-                sharing_id = createDirectoryEntity(user_info, 'shared')
-                addDirectoryToUser(user_info_id, sharing_id)
+                sharing_id = createDirectoryEntity(user_info_id, 'shared')
+                addDirectoryToUser(user_info, sharing_id)
                 print('created sharing: ', sharing_id)
-            else:
-                sharing_id = retrieveDirectoryEntity(user_info, 'shared')
-                sharing_id = sharing_id['key']
-                print('retrieved sharing: ', sharing_id)
+
+            sharing = retrieveDirectoryEntity(user_info, 'shared')
+            sharing_id = sharing['key']
+            print('retrieved sharing: ', sharing_id)
             # Fetch directory list from datastore
             directories = retrieveDirectories(user_info)
 

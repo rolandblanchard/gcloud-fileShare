@@ -48,6 +48,10 @@
         /><input type="submit" value="Upload" />
       </form>
       <h2>Memory used: {{memory}}</h2>
+      <h3>File Sharing</h3>
+      <form action="/enterShare" method="POST">
+        <input type="submit" value="Enter Share" />
+      </form>
       <h1>list of directories</h1>
       <br />
       {% for directory in directories %} {% if directory['name'] !=

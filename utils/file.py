@@ -30,7 +30,7 @@ def createFileEntity(user_info, file_name, root, path, file_blob):
         'root': root,
         'path': path,
         'size': file_blob.size,
-        'owner': ""
+        'owner': owner
     })
 
     datastore_client.put(entity)
@@ -80,8 +80,6 @@ def getAllFileMemory(file):
 
 def deleteFile(user_info, file_key):
 
-    print(user_info, "~", file_key)
-
     file = getEntityById('File', file_key)
     print('dir of file: ', file)
     file_size = getAllFileMemory(file)
@@ -110,8 +108,6 @@ def deleteFile(user_info, file_key):
     datastore_client.put(directory)
 
     deleteFileBlob(file)
-
-    # remove memory
 
 
 def findFile(directory, file_name):
