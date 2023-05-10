@@ -62,7 +62,7 @@
               <input type="submit" value="Delete" />
               {{ files[i]['name'] }}
             </form>
-            <form action="/versions/{{ files[i]['name'] }}" method="post">
+            <form action="/versions/{{ files[i]['key'] }}" method="post">
               <input type="submit" value="Versions" />
             </form>
           </td>

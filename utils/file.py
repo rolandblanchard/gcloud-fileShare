@@ -11,9 +11,8 @@ from utils.helper import getEntityById
 datastore_client = datastore.Client()
 
 
-def createFileEntity(user_id, file_name, path):
+def createFileEntity(user_id, file_name, path, file_blob):
     key = uuid.uuid4().hex
-    now = datetime.datetime.now()
     format = file_name.split(".")[-1]
     entity_key = datastore_client.key('File', key)
     entity = datastore.Entity(key=entity_key)
@@ -23,8 +22,9 @@ def createFileEntity(user_id, file_name, path):
         'name': file_name,
         'format': format,
         'versions': [],
-        'date_added': now,
-        'last_modified': now,
+        'current_version': "",
+        'date_added': file_blob.time_created,
+        'last_modified': file_blob.time_created,
         'path': path
     })
 
@@ -96,3 +96,13 @@ def deleteFile(user_info, file_key):
     datastore_client.put(directory)
 
     deleteFileBlob(file)
+
+
+def findFile(directory, file_name):
+    files = retrieveFileEntities(directory)
+
+    for file in files:
+        if file['name'] == file_name:
+            return file
+
+    return None

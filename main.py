@@ -21,20 +21,29 @@ datastore_client = datastore.Client()
 firebase_request_adapter = requests.Request()
 
 
-@app.route('/versions/<string:file_name>', methods=['POST'])
-def deleteFileFromDirectory(file_name):
+@app.route('/versions/<file_id>', methods=['POST'])
+def deleteFileFromDirectory(file_id):
     id_token = request.cookies.get("token")
     error_message = None
     directory = None
+    file = None
 
     if id_token:
         try:
             claims = google.oauth2.id_token.verify_firebase_token(
                 id_token, firebase_request_adapter)
+
+            file = getEntityById('File', file_id)
+            print("file versions: ", file['versions'])
+            versions = getBlobVersions(file['path']+file['name'])
+            print("versions: ", versions)
+            for v in versions:
+                print(v.name, v.generation, v.time_created)
+
         except ValueError as exc:
             error_message = str(exc)
 
-    return render_template('versions.html')
+    return render_template('versions.html', user_data=claims, error_message=error_message, file=file)
 
 
 @app.route('/enter_directory/<dirname>', methods=['POST'])
@@ -43,10 +52,10 @@ def enterDirectoryHandler(dirname):
     error_message = None
     claims = None
     user_info = None
-    file_list = []
-    directory_list = []
     files = []
     directory = None
+    root = None
+    directory_name = None
 
     if id_token:
         try:
@@ -55,6 +64,8 @@ def enterDirectoryHandler(dirname):
             user_info = retrieveUserInfo(claims)
 
             directory = getEntityById("Directory", dirname)
+            root = directory['key']
+            directory_name = directory['name']
 
             files = retrieveFileEntities(directory)
 
@@ -64,7 +75,7 @@ def enterDirectoryHandler(dirname):
     return render_template('directory.html', user_data=claims, error_message=error_message,
                            user_info=user_info, file_list_size=len(
                                files),
-                           files=files, current_directory=directory['name'], dir_key=directory['key'])
+                           files=files, current_directory=directory_name, dir_key=root)
 
 
 @app.route('/add_directory', methods=['POST'])
@@ -83,7 +94,7 @@ def addDirectoryHandler():
                 return redirect('/')
 
             user_info = retrieveUserInfo(claims)
-            addDirectory(claims['user_id'] + '/' + directory_name+'/')
+            addDirectoryBlob(claims['user_id'] + '/' + directory_name+'/')
             # adding directory to datastore
             id = createDirectoryEntity(claims['user_id'], directory_name)
             addDirectoryToUser(user_info, id)
@@ -116,28 +127,33 @@ def uploadFileHandler(key):
             filename = str(file.filename)
 
             directory_name = claims['user_id'] + '/'
-            print("oops: ", key, '|', user_info['root_key'])
+
             if key != user_info['root_key']:
-                print("oops: ", key, '|', user_info['root_key'])
                 directory_name = directory_name + directory['name']+'/'
 
-            print("dirname: ", directory_name)
+            file_found = findFile(directory, filename)
 
-            # if checkIfVersion(directory['file_list'], filename):
-            #     # get old file
-            #     old_file = getFileEntity(filename)
-            #     # create version from old_file
-            #     new_version = createVersionEntity(old_file)
-            #     addVersionToFile(old_file, new_version)
-            #     moveFileToVersion(directory_name, filename)
+            file_added = addFileBlob(file, directory_name)
 
-            # else:
+            if file_found != None:
+                # create version from old_file
+                file_blob = getLatestVersion(file_found)
 
-            id = createFileEntity(claims['user_id'], filename, directory_name)
+                print('\ngeneration', file_blob.generation, "\ntime_created:",
+                      file_blob.time_created, "\nname:", file_blob.name)
 
-            addFileToDirectory(directory, id)
+                new_version = createVersionEntity(file_blob)
 
-            addFile(file, directory_name)
+                addVersionToFile(file_found, new_version)
+
+                # moveFileToVersion(file_found)
+
+            else:
+
+                id = createFileEntity(
+                    claims['user_id'], filename, directory_name, file_added)
+
+                addFileToDirectory(directory, id)
 
         except ValueError as exc:
             error_message = str(exc)
@@ -205,13 +221,16 @@ def root():
             user_info = retrieveUserInfo(claims)
             user_info_id = claims['user_id']
 
+            # Check if versioning is enabled and if not enables it
+            print(enable_versioning())
+
             # Upon first login initialise entities
             if user_info == None:
                 createUserInfo(claims)
                 user_info = retrieveUserInfo(claims)
                 id = createDirectoryEntity(user_info_id, claims['user_id'])
                 addDirectoryToUser(user_info, id)
-                addDirectory(user_info_id+"/"+"versions/")
+                addDirectoryBlob(user_info_id+"/"+"versions/")
 
                 user_info.update({
                     'root_key': id

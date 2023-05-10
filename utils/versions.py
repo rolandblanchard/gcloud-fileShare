@@ -5,39 +5,40 @@ from flask import Flask, render_template, request, redirect, Response
 
 from utils.bucket import deleteFileBlob
 from utils.directory import retrieveDirectoryEntity
+from utils.file import retrieveFileEntities
 
 datastore_client = datastore.Client()
 
 
-def createVersionEntity(file):
+def createVersionEntity(fileBlob):
     now = datetime.datetime.now()
 
     entity = datastore.Entity()
     entity.update({
-        'name': file['name'],
-        'format': file['format'],
-        'date_added': file['date_added'],
-        'path': file['path']
+        'name': fileBlob.name,
+        'time_created': fileBlob.time_created,
+        'path': "",
+        'version_of': "",
+        'generation': fileBlob.generation
     })
 
     return entity
 
 
 def addVersionToFile(old_file, version):
-    now = datetime.datetime.now()
+
+    version.update({
+        'path': old_file['path'],
+        'version_of': old_file['key']
+    })
+
     file_versions = old_file['versions']
 
     file_versions.append(version)
 
     old_file.update({
         'versions': file_versions,
-        'date_modified': now
+        'current_version': version['generation'],
+        'last_modified': version['time_created']
     })
     datastore_client.put(old_file)
-
-
-def checkIfVersion(file_list, file_name):
-    if file_name in file_list:
-        return True
-    else:
-        return False
