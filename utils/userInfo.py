@@ -6,6 +6,8 @@ from google.auth.transport import requests
 from google.cloud import datastore, storage
 from flask import Flask, render_template, request, redirect, Response
 
+from utils.helper import getEntityById
+
 datastore_client = datastore.Client()
 
 

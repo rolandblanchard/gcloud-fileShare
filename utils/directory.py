@@ -6,6 +6,8 @@ from flask import Flask, render_template, request, redirect, Response
 
 from utils.bucket import deleteDirectoryBlob
 
+from utils.helper import getEntityById
+
 datastore_client = datastore.Client()
 
 
@@ -112,3 +114,14 @@ def collectMemory(user_info):
         'size': sum
     })
     datastore_client.put(user_info)
+
+
+def getSharingDirectory(user_email):
+    collab_info = getEntityById('UserInfo', user_email)
+    if collab_info == None:
+        return None
+    directories = retrieveDirectories(collab_info)
+    for dir in directories:
+        if dir['name'] == 'shared':
+            return dir
+    return None

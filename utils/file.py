@@ -5,15 +5,17 @@ from google.cloud import datastore, storage
 from flask import Flask, render_template, request, redirect, Response
 
 from utils.bucket import deleteFileBlob
-from utils.directory import retrieveDirectoryEntity, updateMemory
+from utils.directory import retrieveDirectoryEntity, updateMemory, getSharingDirectory
 from utils.helper import getEntityById
 
 datastore_client = datastore.Client()
 
 
-def createFileEntity(user_id, file_name, root, path, file_blob):
+def createFileEntity(user_info, file_name, root, path, file_blob):
     key = uuid.uuid4().hex
     format = file_name.split(".")[-1]
+    user_id = user_info['user_id']
+    owner = user_info['email']
     entity_key = datastore_client.key('File', key)
     entity = datastore.Entity(key=entity_key)
     entity.update({
@@ -27,7 +29,8 @@ def createFileEntity(user_id, file_name, root, path, file_blob):
         'last_modified': file_blob.time_created,
         'root': root,
         'path': path,
-        'size': file_blob.size
+        'size': file_blob.size,
+        'owner': ""
     })
 
     datastore_client.put(entity)
@@ -119,3 +122,37 @@ def findFile(directory, file_name):
             return file
 
     return None
+
+
+''' sends file key to sharing directory list'''
+
+
+def fileKeyExists(directory, file_key):
+
+    for dir in directory['file_list']:
+        if dir == file_key:
+            return True
+
+    return False
+
+
+def shareFile(user_info, file_key):
+    print('in shareFile')
+    file = getEntityById('File', file_key)
+    sharing = retrieveDirectoryEntity(user_info, 'shared')
+    if not fileKeyExists(sharing, file_key):
+        addFileToDirectory(sharing, file_key)
+
+
+''' adds file key to collaborators sharing directory list '''
+
+
+def addCollaborator(user_email, file_key):
+    print('in addCollab')
+    collab_directory = getSharingDirectory(user_email)
+    if collab_directory == None:
+        return False
+    if not fileKeyExists(collab_directory, file_key):
+        addFileToDirectory(collab_directory, file_key)
+        return True
+    return False

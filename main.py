@@ -21,39 +21,80 @@ datastore_client = datastore.Client()
 firebase_request_adapter = requests.Request()
 
 
-@app.route('/share', methods=['POST'])
-def moveToSharedDirectoryHandler():
+@app.route('/add_user', methods=['POST'])
+def addUserHandler():
     id_token = request.cookies.get("token")
     error_message = None
-    directory = None
-    file = None
-    current_directory = ""
-    version_count = 0
-    version_list = []
+    shared = None
+    file_list = []
+
+    if id_token:
+        try:
+            claims = google.oauth2.id_token.verify_firebase_token(
+                id_token, firebase_request_adapter)
+            file_key = request.form['file_key']
+
+            user_info = retrieveUserInfo(claims)
+
+            collab_email = request.form['email']
+
+            collab_user = getEntityById('User', collab_email)
+
+            if collab_user == None:
+                print('User not found')
+            else:
+                addCollaborator(collab_email, file_key)
+
+        except ValueError as exc:
+            error_message = str(exc)
+
+    return redirect('/')
+
+
+@app.route('/enterShare', methods=['POST'])
+def enterSharedHandler():
+    id_token = request.cookies.get("token")
+    error_message = None
+    shared = None
+    file_list = []
 
     if id_token:
         try:
             claims = google.oauth2.id_token.verify_firebase_token(
                 id_token, firebase_request_adapter)
 
-            file_id = request.form['file_key']
+            user_info = retrieveUserInfo(claims)
 
-            file = getEntityById('File', file_id)
-            print("Entering versioning for: ", file['name'])
+            shared = retrieveDirectoryEntity(user_info, 'shared')
+            print('shared: ', shared)
 
-            directory = getEntityById('Directory', file['root'])
-            current_directory = directory['name']
-
-            versions = getBlobVersions(file)
-
-            version_count = len(list(versions))
-
-            version_list = file['versions']
+            for key in shared[file_list]:
+                file_list.append(getEntityById('File', key))
 
         except ValueError as exc:
             error_message = str(exc)
 
-    return render_template('share.html', user_data=claims, error_message=error_message, file=file, current_directory=current_directory, version_count=version_count, version_list=version_list)
+    return render_template('share.html', user_data=claims, error_message=error_message, file_list=file_list)
+
+
+@app.route('/share', methods=['POST'])
+def moveToSharedDirectoryHandler():
+    id_token = request.cookies.get("token")
+    error_message = None
+
+    if id_token:
+        try:
+            claims = google.oauth2.id_token.verify_firebase_token(
+                id_token, firebase_request_adapter)
+            file_key = request.form['file_key']
+            user_info = retrieveUserInfo(claims)
+
+            shareFile(user_info, file_key)
+
+        except ValueError as exc:
+            error_message = str(exc)
+
+    return redirect('/')
 
 
 @app.route('/download/<filekey>/<generation>', methods=['POST'])
@@ -266,7 +307,7 @@ def uploadFileHandler(key):
             else:
 
                 id = createFileEntity(
-                    claims['user_id'], filename, directory['key'], directory_name, file_added)
+                    user_info, filename, directory['key'], directory_name, file_added)
 
                 addFileToDirectory(directory, id)
 
@@ -333,6 +374,7 @@ def root():
     files = []
     root_id = None
     memory = 0
+    sharing_id = None
 
     if id_token:
         try:
@@ -357,6 +399,13 @@ def root():
                 })
                 datastore_client.put(user_info)
 
+                sharing_id = createDirectoryEntity(user_info, 'shared')
+                addDirectoryToUser(user_info_id, sharing_id)
+                print('created sharing: ', sharing_id)
+            else:
+                sharing_id = retrieveDirectoryEntity(user_info, 'shared')
+                sharing_id = sharing_id['key']
+                print('retrieved sharing: ', sharing_id)
             # Fetch directory list from datastore
             directories = retrieveDirectories(user_info)
 
