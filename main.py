@@ -21,6 +21,41 @@ datastore_client = datastore.Client()
 firebase_request_adapter = requests.Request()
 
 
+@app.route('/share', methods=['POST'])
+def moveToSharedDirectoryHandler():
+    id_token = request.cookies.get("token")
+    error_message = None
+    directory = None
+    file = None
+    current_directory = ""
+    version_count = 0
+    version_list = []
+
+    if id_token:
+        try:
+            claims = google.oauth2.id_token.verify_firebase_token(
+                id_token, firebase_request_adapter)
+
+            file_id = request.form['file_key']
+
+            file = getEntityById('File', file_id)
+            print("Entering versioning for: ", file['name'])
+
+            directory = getEntityById('Directory', file['root'])
+            current_directory = directory['name']
+
+            versions = getBlobVersions(file)
+
+            version_count = len(list(versions))
+
+            version_list = file['versions']
+
+        except ValueError as exc:
+            error_message = str(exc)
+
+    return render_template('share.html', user_data=claims, error_message=error_message, file=file, current_directory=current_directory, version_count=version_count, version_list=version_list)
+
+
 @app.route('/download/<filekey>/<generation>', methods=['POST'])
 def downloadVersionHandler(filekey, generation):
 

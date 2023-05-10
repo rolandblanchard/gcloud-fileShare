@@ -72,24 +72,29 @@
           <th>Date added</th>
           <th>Date Last Modified</th>
           <th>Location</th>
+          <th>Actions</th>
         </tr>
         {% for file in files%}
 
         <tr>
           <td>{{file['size']}}</td>
-          <td>
-            <form action="/delete_file/{{ file['key'] }}" method="post">
-              <input type="submit" value="Delete" />
-              {{ file['name'] }}
-            </form>
-            <form action="/versions/{{ file['key'] }}" method="post">
-              <input type="submit" value="Versions" />
-            </form>
-          </td>
+          <td>{{ file['name'] }}</td>
           <td>{{file['format']}}</td>
           <td class="date">{{file['date_added']}}</td>
           <td class="date">{{file['last_modified']}}</td>
           <td>{{file['path']}}</td>
+          <td>
+            <form action="/delete_file/{{ file['key'] }}" method="post">
+              <input type="submit" value="Delete" />
+            </form>
+            <form action="/versions/{{ file['key'] }}" method="post">
+              <input type="submit" value="Versions" />
+            </form>
+            <form action="/share" method="post">
+              <input type="hidden" name="file_key" value="{{ file['key'] }}" />
+              <input type="submit" value="Share" />
+            </form>
+          </td>
         </tr>
         {%endfor%}
       </table>

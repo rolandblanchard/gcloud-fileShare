@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Datastore and Firebase Auth Example</title>
+    <title>Share Folder</title>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     <link
       type="text/css"
@@ -16,8 +16,15 @@
   </head>
   <body>
     <div>
-      <h1>File versioning</h1>
-      <h2>{{file['name']}} in {{current_directory}}</h2>
+      <h1>File Sharing</h1>
+      <h2>{{file['name']}}</h2>
+      <form action="/add_user" method="post">
+        Share with:
+        <input type="email" name="email" placeholder="enter email" /><input
+          type="submit"
+          value="Add"
+        />
+      </form>
       <h3>Total versions {{version_count}}</h3>
       <br />
       <form action="/">
