@@ -28,10 +28,9 @@
         <dt>Name:</dt>
         <dd>{{ user_data['name'] }}</dd>
       </dl>
-      <div>Currently in: {{current_directory}}</div>
       </br>
       <form
-        action="/upload_file/{{dir_key}}"
+        action="/upload_file_dir/{{directory['key']}}"
         method="POST"
         enctype="multipart/form-data"
       >
@@ -42,8 +41,8 @@
           accept=".docx,.odt,.xslx,.ods"
         /><input type="submit" value="Upload" />
       </form>
-      <h2>Memory used: {{dir_mem}} of {{ memory }} used</h2>
-      <h1>Files in {{current_directory}}</h1>
+      <h2>Memory used: {{directory['size']}} of {{ user_info['size'] }} used</h2>
+      <h1>Files in {{directory['name']}}</h1>
       <br />
       <table>
         <tr>
@@ -53,24 +52,25 @@
           <th>Date added</th>
           <th>Date Last Modified</th>
           <th>Location</th>
+          <th>Actions</th>
         </tr>
-        {% for i in range(file_list_size)%}
+        {% for file in files%}
 
         <tr>
-          <td>{{files[i]['size']}}</td>
+          <td>{{file['size']}}</td>
+          <td>{{ file['name'] }}</td>
+          <td>{{file['format']}}</td>
+          <td class="date">{{file['date_added']}}</td>
+          <td class="date">{{file['last_modified']}}</td>
+          <td>{{file['path']}}</td>
           <td>
-            <form action="/delete_file/{{ files[i]['key'] }}" method="post">
+            <form action="/delete_file/{{ file['key'] }}" method="post">
               <input type="submit" value="Delete" />
-              {{ files[i]['name'] }}
             </form>
-            <form action="/versions/{{ files[i]['key'] }}" method="post">
+            <form action="/versions/{{ file['key'] }}" method="post">
               <input type="submit" value="Versions" />
             </form>
           </td>
-          <td>{{files[i]['format']}}</td>
-          <td class="date">{{files[i]['date_added']}}</td>
-          <td class="date">{{files[i]['last_modified']}}</td>
-          <td>{{files[i]['path']}}</td>
         </tr>
         {%endfor%}
       </table>

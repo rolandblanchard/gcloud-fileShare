@@ -35,14 +35,33 @@
         </form>
         <table>
           <tr>
+            <th>Live</th>
             <th>Size</th>
             <th>Date added</th>
             <th>Version of</th>
             <th>Name</th>
+            <th>Actions</th>
+          </tr>
+          <tr>
+            <td>Yes</td>
+            <td>{{file['size']}}</td>
+            <td>{{ file['date_added'] }}</td>
+
+            <td class="generation">{{file['current_version']}}</td>
+            <td class="date">{{file['name']}}</td>
+            <td class="actions">
+              <form
+                action="/download/{{ file['key'] }}/{{file['current_version']}}"
+                method="post"
+              >
+                <input type="submit" value="Download" />
+              </form>
+            </td>
           </tr>
           {% for version in file['versions']%}
 
           <tr>
+            <td>No</td>
             <td>{{version['size']}}</td>
             <td>{{ version['time_created'] }}</td>
 
@@ -56,7 +75,7 @@
                 <input type="submit" value="Delete" />
               </form>
               <form
-                action="/download/{{ file['key'] }}/{{version['generation']}}"
+                action="/download/{{ file['key'] }}/{{file['current_version']}}"
                 method="post"
               >
                 <input type="submit" value="Download" />
@@ -82,23 +101,47 @@
         </form>
         <table>
           <tr>
-            <th>Size</th>
+            <th>Live</th>
+
             <th>Date added</th>
             <th>Version of</th>
             <th>Name</th>
             <th>Actions</th>
           </tr>
+          <tr>
+            <td>Yes</td>
+            <td>{{file['size']}}</td>
+            <td>{{ file['date_added'] }}</td>
+
+            <td class="generation">{{file['current_version']}}</td>
+            <td class="date">{{file['name']}}</td>
+            <td class="actions">
+              <form
+                action="/download/{{ file['key'] }}/{{file['current_version']}}"
+                method="post"
+              >
+                <input type="submit" value="Download" />
+              </form>
+            </td>
+          </tr>
           {% for version in file['versions']%}
 
           <tr>
-            <td>{{version['size']}}</td>
+            <td>No</td>
+
             <td>{{ version['time_created'] }}</td>
 
             <td class="generation">{{version['generation']}}</td>
             <td class="date">{{file['name']}}</td>
             <td class="actions">
               <form
-                action="/download/{{ file['key'] }}/{{version['generation']}}"
+                action="/delete_version/{{ file['key'] }}/{{version['generation']}}"
+                method="post"
+              >
+                <input type="submit" value="Delete" />
+              </form>
+              <form
+                action="/download/{{ file['key'] }}/{{file['current_version']}}"
                 method="post"
               >
                 <input type="submit" value="Download" />

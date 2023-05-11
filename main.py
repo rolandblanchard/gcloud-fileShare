@@ -13,6 +13,7 @@ from utils.file import *
 from utils.bucket import *
 from utils.versions import *
 from utils.helper import *
+from utils.Handlers import *
 
 
 app = Flask(__name__)
@@ -59,7 +60,8 @@ def enterSharedHandler():
     id_token = request.cookies.get("token")
     error_message = None
     shared = None
-    owned_list, collab_list = []
+    owned_list = []
+    collab_list = []
 
     if id_token:
         try:
@@ -199,9 +201,7 @@ def enterDirectoryHandler(dirname):
     user_info = None
     files = []
     directory = None
-    root = None
-    directory_name = None
-    dir_mem = 0
+
     memory = 0
 
     if id_token:
@@ -211,8 +211,6 @@ def enterDirectoryHandler(dirname):
             user_info = retrieveUserInfo(claims)
 
             directory = getEntityById("Directory", dirname)
-            root = directory['key']
-            directory_name = directory['name']
 
             files = retrieveFileEntities(directory)
 
@@ -226,9 +224,8 @@ def enterDirectoryHandler(dirname):
             error_message = str(exc)
 
     return render_template('directory.html', user_data=claims, error_message=error_message,
-                           user_info=user_info, file_list_size=len(
-                               files),
-                           files=files, current_directory=directory_name, dir_key=root, dir_mem=dir_mem, memory=memory)
+                           user_info=user_info,
+                           files=files, directory=directory, memory=memory)
 
 
 @app.route('/add_directory', methods=['POST'])
@@ -255,6 +252,46 @@ def addDirectoryHandler():
         except ValueError as exc:
             error_message = str(exc)
     return redirect('/')
+
+
+@app.route('/upload_file_dir/<key>', methods=['POST'])
+def uploadFileFromDirectoryHandler(key):
+    id_token = request.cookies.get("token")
+    error_message = None
+    claims = None
+    times = None
+    user_info = None
+    directory = None
+    file_size = 0
+    files = []
+
+    if id_token:
+        try:
+            claims = google.oauth2.id_token.verify_firebase_token(id_token,
+                                                                  firebase_request_adapter)
+            file = request.files['file_name']
+
+            if file.filename == '':
+                return redirect('/')
+            user_info = retrieveUserInfo(claims)
+
+            directory = getEntityById("Directory", key)
+
+            file_size = uploadFromDirectory(user_info, file, directory, key)
+
+            # Update memory usage in directory
+            updateMemory(directory, file_size)
+            print('updating memory, increasing by ', file_size)
+
+            files = retrieveFileEntities(directory)
+
+            collectMemory(user_info)
+
+        except ValueError as exc:
+            error_message = str(exc)
+    return render_template('directory.html', user_data=claims, error_message=error_message,
+                           user_info=user_info,
+                           files=files, directory=directory)
 
 
 @app.route('/upload_file/<key>', methods=['POST'])
