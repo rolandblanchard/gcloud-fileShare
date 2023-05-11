@@ -13,6 +13,29 @@
       rel="stylesheet"
       href="https://www.gstatic.com/firebasejs/ui/4.4.0/firebase-ui-auth.css"
     />
+    <script>
+      function validateEmail(email) {
+        const re = /\S+@\S+\.\S+/;
+        return re.test(email);
+      }
+
+      const form = document.querySelector("addUserEmail");
+      const emailInput = document.querySelector('input[type="email"]');
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const email = emailInput.value.trim();
+
+        if (!validateEmail(email)) {
+          alert("Email not valid!");
+          emailInput.focus();
+          return false;
+        }
+
+        form.submit();
+      });
+    </script>
   </head>
   <header>
     <h1 class="title">File Sharing</h1>
@@ -39,7 +62,7 @@
         {% for file in owned_list %}
         <h2>{{file['name']}}</h2>
         <h3>Owner: {{file['owner']}}</h3>
-        <form action="/add_user" method="post">
+        <form class="addUserEmail" action="/add_user" method="post">
           Share with:
           <input type="hidden" name="file_key" value="{{ file['key'] }}" />
           <input type="email" name="email" placeholder="enter email" /><input
@@ -113,10 +136,25 @@
             value="Add"
           />
         </form>
+        <div class="uploadFile">
+          <form
+            action="/upload_file_share"
+            method="POST"
+            enctype="multipart/form-data"
+          >
+            Upload File:
+            <input type="hidden" name="owner" value="{{file['owner']}}" />
+            <input type="hidden" name="dir_key" value="{{shared['key']}}" />
+            <input type="hidden" name="file_key" value="{{file['key']}}" />
+            <input
+              type="file"
+              name="file_name"
+              accept=".docx,.odt,.xslx,.ods"
+            /><input type="submit" value="Upload" />
+          </form>
         <table>
           <tr>
             <th>Live</th>
-
             <th>Date added</th>
             <th>Version of</th>
             <th>Name</th>
@@ -124,11 +162,10 @@
           </tr>
           <tr>
             <td>Yes</td>
-            <td>{{file['size']}}</td>
-            <td>{{ file['date_added'] }}</td>
+            <td>{{file['date_added']}}</td>
+            <td>{{ file['current_version'] }}</td>
 
-            <td class="generation">{{file['current_version']}}</td>
-            <td class="date">{{file['name']}}</td>
+            <td class="name">{{file['name']}}</td>
             <td class="actions">
               <form
                 action="/download/{{ file['key'] }}/{{file['current_version']}}"
@@ -148,12 +185,6 @@
             <td class="generation">{{version['generation']}}</td>
             <td class="date">{{file['name']}}</td>
             <td class="actions">
-              <form
-                action="/delete_version/{{ file['key'] }}/{{version['generation']}}"
-                method="post"
-              >
-                <input type="submit" value="Delete" />
-              </form>
               <form
                 action="/download/{{ file['key'] }}/{{file['current_version']}}"
                 method="post"

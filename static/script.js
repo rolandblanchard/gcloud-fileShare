@@ -9,15 +9,12 @@ window.addEventListener("load", function () {
     signInSuccessUrl: "/",
     signInOptions: [firebase.auth.EmailAuthProvider.PROVIDER_ID],
   };
-
-  // Cloud Function to create user_info entity in Datastore after user is created
-
   firebase.auth().onAuthStateChanged(
     function (user) {
       if (user) {
         document.getElementById("sign-out").hidden = false;
         document.getElementById("login-info").hidden = false;
-        console.log(`Signed in as ${user.displayName} (${user.email})`);
+        console.log("Signed in as ${user.displayName} (${user.email})");
         user.getIdToken().then(function (token) {
           document.cookie = "token=" + token;
         });

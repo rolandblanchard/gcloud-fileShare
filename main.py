@@ -39,7 +39,9 @@ def addUserHandler():
 
             collab_email = request.form['email']
 
-            collab_user = getEntityById('User', collab_email)
+            collab_user = getUserInfoByEmail(collab_email)
+
+            print('\n collab user: ', collab_user, '\n')
 
             if collab_user == None:
                 print('\nUser not found\n')
@@ -62,6 +64,7 @@ def enterSharedHandler():
     shared = None
     owned_list = []
     collab_list = []
+    shared = None
 
     if id_token:
         try:
@@ -72,10 +75,12 @@ def enterSharedHandler():
 
             owned_list, collab_list = getSharedFiles(user_info)
 
+            shared = retrieveDirectoryEntity(user_info, 'shared')
+
         except ValueError as exc:
             error_message = str(exc)
 
-    return render_template('share.html', user_data=claims, error_message=error_message, owned_list=owned_list, collab_list=collab_list)
+    return render_template('share.html', user_data=claims, error_message=error_message, owned_list=owned_list, collab_list=collab_list, shared=shared)
 
 
 @app.route('/share', methods=['POST'])
@@ -252,6 +257,42 @@ def addDirectoryHandler():
         except ValueError as exc:
             error_message = str(exc)
     return redirect('/')
+
+
+@app.route('/upload_file_share', methods=['POST'])
+def uploadFileFromShareHandler():
+    id_token = request.cookies.get("token")
+    error_message = None
+    claims = None
+    user_info = None
+    shared = None
+    owned_list = []
+    collab_list = []
+
+    if id_token:
+        try:
+            claims = google.oauth2.id_token.verify_firebase_token(id_token,
+                                                                  firebase_request_adapter)
+
+            user_info = retrieveUserInfo(claims)
+
+            file = request.files['file_name']
+
+            file_owner = request.form['owner']
+            shared_key = request.form['dir_key']
+            file_key = request.form['file_key']
+
+            uploadFromShared(file_owner, file_key, file)
+
+            owned_list, collab_list = getSharedFiles(user_info)
+            shared = getEntityById('Directory', shared_key)
+
+            collectMemory(user_info)
+
+        except ValueError as exc:
+            error_message = str(exc)
+
+    return render_template('share.html', user_data=claims, error_message=error_message, owned_list=owned_list, collab_list=collab_list, shared=shared)
 
 
 @app.route('/upload_file_dir/<key>', methods=['POST'])
