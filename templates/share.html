@@ -130,14 +130,6 @@
         {% for file in collab_list %}
         <h2>{{file['name']}}</h2>
         <h3>Owner: {{file['owner']}}</h3>
-        <form action="/add_user" method="post">
-          Share with:
-          <input type="hidden" name="file_key" value="{{ file['key'] }}" />
-          <input type="email" name="email" placeholder="enter email" /><input
-            type="submit"
-            value="Add"
-          />
-        </form>
         <div class="uploadFile">
           <form
             action="/upload_file_share"
