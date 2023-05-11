@@ -8,6 +8,7 @@ from utils.directory import *
 from utils.helper import getEntityById
 from utils.file import *
 from utils.versions import *
+from utils.userInfo import getUserInfoByEmail
 
 datastore_client = datastore.Client()
 
@@ -48,30 +49,38 @@ def uploadFromDirectory(user_info, file, directory, key):
 def uploadFromShared(file_owner, file_key, file):
 
     original_file = getEntityById('File', file_key)
+    print(str(file.filename), original_file['name'])
 
-    original_directory = getEntityById('Directory', original_file['root'])
+    if str(file.filename) == original_file['name']:
 
-    print("\nadding file version from sharing: ", file_owner, '\n')
+        print('\nFile versions match\n')
 
-    collab_info = getUserInfoByEmail(file_owner)
+        original_directory = getEntityById('Directory', original_file['root'])
 
-    directory_name = collab_info['user_id'] + '/'
+        print("\nadding file version from sharing: ", file_owner, '\n')
 
-    if original_directory['key'] != collab_info['root_key']:
-        directory_name = directory_name + original_directory['name']+'/'
+        collab_info = getUserInfoByEmail(file_owner)
 
-    file_added = addFileBlob(file, directory_name)
+        directory_name = collab_info['user_id'] + '/'
 
-    file_size = file_added.size
+        if original_directory['key'] != collab_info['root_key']:
+            directory_name = directory_name + original_directory['name']+'/'
 
-    # create version from old_file
-    file_blob = getPreviousVersion(original_file, file_added.generation)
+        file_added = addFileBlob(file, directory_name)
 
-    previous_version = createVersionEntity(file_blob)
+        file_size = file_added.size
 
-    addVersionToFile(file_added, original_file, previous_version)
+        # create version from old_file
+        file_blob = getPreviousVersion(original_file, file_added.generation)
 
-    updateMemory(original_directory, file_size)
+        previous_version = createVersionEntity(file_blob)
+
+        addVersionToFile(file_added, original_file, previous_version)
+
+        updateMemory(original_directory, file_size)
+
+    else:
+        print('\nFile must match version\n')
 
 
 def deleteFile(user_info, file_key):
@@ -102,6 +111,8 @@ def deleteFile(user_info, file_key):
 
     datastore_client.put(directory)
 
+    deleteFileKeysFromShared(file_key)
+
     deleteFileBlob(file)
 
 
@@ -119,14 +130,16 @@ def getSharedFiles(user_info):
 
     shared = retrieveDirectoryEntity(user_info, 'shared')
     print('\nsearching for shared files...')
-
-    for key in shared['file_list']:
-        file = getEntityById('File', key)
-        if file['owner'] == user_info['email']:
-            print('\nadded owned:', file['owner'], '\n')
-            owned_list.append(file)
-        else:
-            collab_list.append(file)
+    if len(shared['file_list']) > 0:
+        for key in shared['file_list']:
+            file = getEntityById('File', key)
+            if file['owner'] == user_info['email']:
+                print('\nadded owned:', file['owner'], '\n')
+                owned_list.append(file)
+            else:
+                collab_list.append(file)
+    else:
+        print('\nShared Folder empty\n')
 
     return owned_list, collab_list
 

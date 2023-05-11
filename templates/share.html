@@ -108,7 +108,7 @@
             <td class="date">{{file['name']}}</td>
             <td class="actions">
               <form
-                action="/delete_version/{{ file['key'] }}/{{version['generation']}}"
+                action="/delete_shared_version/{{ file['key'] }}/{{version['generation']}}"
                 method="post"
               >
                 <input type="submit" value="Delete" />

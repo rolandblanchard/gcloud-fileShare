@@ -8,6 +8,7 @@ from utils.bucket import deleteDirectoryBlob
 
 from utils.helper import getEntityById
 from utils.versions import *
+from utils.userInfo import getAllUsers
 
 datastore_client = datastore.Client()
 
@@ -140,3 +141,17 @@ def getViewingDirectories(user_info):
             print('added: ', dirs['name'])
 
     return viewing
+
+
+def deleteFileKeysFromShared(file_key):
+    users = getAllUsers()
+    for user in users:
+        shared = retrieveDirectoryEntity(user, 'shared')
+        file_list = shared['file_list']
+        if file_key in file_list:
+            print('file key in file list')
+            file_list.remove(file_key)
+            shared.update({
+                'file_list': file_list
+            })
+            datastore_client.put(shared)

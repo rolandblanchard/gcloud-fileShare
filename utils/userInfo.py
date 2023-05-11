@@ -41,3 +41,30 @@ def getDirectoryList(claims, dirname):
         return dirs
 
     return dirs
+
+
+def getAllUsers():
+
+    query = datastore_client.query(kind='UserInfo')
+
+    # Retrieve the results from the query
+    results = list(query.fetch())
+
+    # Print the email property of each UserInfo entity
+    for result in results:
+        print(result['email'])
+
+    return results
+
+
+def getUserInfoByEmail(email):
+
+    query = datastore_client.query(kind='UserInfo')
+    query.add_filter('email', '=', email)
+
+    results = list(query.fetch(1))
+
+    if not results:
+        return None
+
+    return results[0]

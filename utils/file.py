@@ -95,16 +95,3 @@ def fileKeyExists(directory, file_key):
             return True
 
     return False
-
-
-def getUserInfoByEmail(email):
-
-    query = datastore_client.query(kind='UserInfo')
-    query.add_filter('email', '=', email)
-
-    results = list(query.fetch(1))
-
-    if not results:
-        return None
-
-    return results[0]

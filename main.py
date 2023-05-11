@@ -27,6 +27,7 @@ firebase_request_adapter = requests.Request()
 def addUserHandler():
     id_token = request.cookies.get("token")
     error_message = None
+    shared = None
 
     if id_token:
         try:
@@ -35,6 +36,7 @@ def addUserHandler():
             file_key = request.form['file_key']
 
             user_info = retrieveUserInfo(claims)
+            shared = retrieveDirectoryEntity(user_info, 'shared')
 
             collab_email = request.form['email']
 
@@ -51,7 +53,7 @@ def addUserHandler():
         except ValueError as exc:
             error_message = str(exc)
 
-    return render_template('share.html', user_data=claims, error_message=error_message, owned_list=owned_list, collab_list=collab_list)
+    return render_template('share.html', user_data=claims, error_message=error_message, owned_list=owned_list, collab_list=collab_list, shared=shared)
 
 
 @app.route('/enterShare', methods=['POST'])
@@ -114,6 +116,43 @@ def downloadVersionHandler(filekey, generation):
             'Content-Disposition': f'attachment;filename={file["name"]}'
         }
     )
+
+
+@app.route('/delete_shared_version/<filekey>/<generation>', methods=['POST'])
+def deleteSharedVersionHandler(filekey, generation):
+    id_token = request.cookies.get("token")
+    error_message = None
+    directory = None
+    file = None
+    current_directory = ""
+    version_count = 0
+    version_list = []
+    file_path = ""
+
+    if id_token:
+        try:
+            claims = google.oauth2.id_token.verify_firebase_token(
+                id_token, firebase_request_adapter)
+
+            file = getEntityById('File', filekey)
+
+            directory = getEntityById('Directory', file['root'])
+
+            file_path = file['path']+file['name']
+            print("\ndeleting version entity- ", generation)
+
+            updated_size = deleteVersionEntity(file, generation)
+
+            if updated_size > 0:
+
+                print("deleting blob version of size", updated_size, "\n")
+                deleteBlobVersion(file_path, generation)
+                updateMemory(directory, -updated_size)
+
+        except ValueError as exc:
+            error_message = str(exc)
+
+    return enterSharedHandler()
 
 
 @app.route('/delete_version/<filekey>/<generation>', methods=['POST'])
@@ -484,6 +523,8 @@ def root():
             collectMemory(user_info)
 
             memory = formatSize(user_info['size'])
+
+            deleteFileKeysFromShared(None)
 
         except ValueError as exc:
             error_message = str(exc)
