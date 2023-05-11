@@ -315,42 +315,11 @@ def uploadFileHandler(key):
 
             directory = getEntityById("Directory", key)
 
-            filename = str(file.filename)
-
-            directory_name = claims['user_id'] + '/'
-
-            if key != user_info['root_key']:
-                directory_name = directory_name + directory['name']+'/'
-
-            file_found = findFile(directory, filename)
-
-            file_added = addFileBlob(file, directory_name)
-            file_size = file_added.size
-
-            if file_found != None:
-                # create version from old_file
-                file_blob = getPreviousVersion(
-                    file_found, file_added.generation)
-
-                print('\ngeneration', file_blob.generation, "\ntime_created:",
-                      file_blob.time_created, "\nname:", file_blob.name)
-
-                previous_version = createVersionEntity(file_blob)
-
-                addVersionToFile(file_added, file_found, previous_version)
-
-                # moveFileToVersion(file_found)
-
-            else:
-
-                id = createFileEntity(
-                    user_info, filename, directory['key'], directory_name, file_added)
-
-                addFileToDirectory(directory, id)
+            file_size = uploadFromDirectory(user_info, file, directory, key)
 
             # Update memory usage in directory
-            print('updating memory, increasing by ', file_size)
             updateMemory(directory, file_size)
+            print('updating memory, increasing by ', file_size)
 
         except ValueError as exc:
             error_message = str(exc)
@@ -443,8 +412,9 @@ def root():
             sharing = retrieveDirectoryEntity(user_info, 'shared')
             sharing_id = sharing['key']
             print('retrieved sharing: ', sharing_id)
-            # Fetch directory list from datastore
-            directories = retrieveDirectories(user_info)
+
+            # Fetch viewable directory list from datastore
+            directories = getViewingDirectories(user_info)
 
             root = retrieveDirectoryEntity(user_info, user_info_id)
             print("root: ", root)

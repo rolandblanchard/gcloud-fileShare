@@ -126,3 +126,16 @@ def getSharingDirectory(user_email):
         if dir['name'] == 'shared':
             return dir
     return None
+
+
+def getViewingDirectories(user_info):
+
+    all_directories = retrieveDirectories(user_info)
+    viewing = []
+    for dirs in all_directories:
+        print('\n', dirs['name'], '\n')
+        if str(dirs['name']) != 'shared' and str(dirs['name']) != str(user_info['user_id']):
+            viewing.append(dirs)
+            print('added: ', dirs['name'])
+
+    return viewing

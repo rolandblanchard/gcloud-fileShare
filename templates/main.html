@@ -15,10 +15,16 @@
       href="https://www.gstatic.com/firebasejs/ui/4.4.0/firebase-ui-auth.css"
     />
   </head>
-  <body>
-    <h1>CSP Assignment</h1>
+  <header>
+    <h1 class="title">CSP Assignment</h1>
     <div id="firebase-auth-container"></div>
     <button id="sign-out" hidden="true">Sign out</button>
+    <div class="enterSharing">
+      <h3>File Sharing</h3>
+      <form action="/enterShare" method="POST">
+        <input type="submit" value="Enter Share" />
+      </form>
+    </div>
     <div id="login-info" hidden="true">
       <h2>Login Info</h2>
       {% if user_data %}
@@ -28,86 +34,115 @@
         <dt>Email:</dt>
         <dd>{{ user_data['email'] }}</dd>
       </dl>
-      <form action="/add_directory" method="post">
-        Directory Name:
-        <input type="text" name="dir_name" placeholder="enter name" /><input
-          type="submit"
-          value="Add"
-        />
-      </form>
-      <form
-        action="/upload_file/{{dir_key}}"
-        method="POST"
-        enctype="multipart/form-data"
-      >
-        Upload File:
-        <input
-          type="file"
-          name="file_name"
-          accept=".docx,.odt,.xslx,.ods"
-        /><input type="submit" value="Upload" />
-      </form>
-      <h2>Memory used: {{memory}}</h2>
-      <h3>File Sharing</h3>
-      <form action="/enterShare" method="POST">
-        <input type="submit" value="Enter Share" />
-      </form>
-      <h1>list of directories</h1>
-      <br />
-      {% for directory in directories %} {% if directory['name'] !=
-      user_data['user_id']%}
-      <br />
-      <form action="/delete_directory/{{directory['key']}}" method="post">
-        <input type="submit" name="delete" value="delete" />
-      </form>
-      {{directory['name']}}
-      <form action="/enter_directory/{{directory['key']}}" method="post">
-        <input type="submit" name="go" value="Go" />
-      </form>
-      <br />
-      {%endif%} {% endfor %}
-      <h1>Files in home Folder</h1>
-      <br />
-      <table>
-        <tr>
-          <th>Size</th>
-          <th>Name</th>
-          <th>Format</th>
-          <th>Date added</th>
-          <th>Date Last Modified</th>
-          <th>Location</th>
-          <th>Actions</th>
-        </tr>
-        {% for file in files%}
+    </div>
+  </header>
+  <body>
+    <div class="container">
+      <div class="userInputs">
+        <div class="addDirectory">
+          <form action="/add_directory" method="post">
+            Directory Name:
+            <input type="text" name="dir_name" placeholder="enter name" /><input
+              type="submit"
+              value="Add"
+            />
+          </form>
+        </div>
+        <div class="uploadFile">
+          <form
+            action="/upload_file/{{dir_key}}"
+            method="POST"
+            enctype="multipart/form-data"
+          >
+            Upload File:
+            <input
+              type="file"
+              name="file_name"
+              accept=".docx,.odt,.xslx,.ods"
+            /><input type="submit" value="Upload" />
+          </form>
+        </div>
+        <h2 class="memoryDisplay">Memory used: {{memory}}</h2>
+      </div>
+      <div class="directoryView">
+        <h1>list of directories</h1>
+        <table>
+          <tr>
+            <th>Size</th>
+            <th>Name</th>
+            <th>Number of files</th>
+            <th>Actions</th>
+          </tr>
+          {% for directory in directories%}
 
-        <tr>
-          <td>{{file['size']}}</td>
-          <td>{{ file['name'] }}</td>
-          <td>{{file['format']}}</td>
-          <td class="date">{{file['date_added']}}</td>
-          <td class="date">{{file['last_modified']}}</td>
-          <td>{{file['path']}}</td>
-          <td>
-            <form action="/delete_file/{{ file['key'] }}" method="post">
-              <input type="submit" value="Delete" />
-            </form>
-            <form action="/versions/{{ file['key'] }}" method="post">
-              <input type="submit" value="Versions" />
-            </form>
-            <form action="/share" method="post">
-              <input type="hidden" name="file_key" value="{{ file['key'] }}" />
-              <input type="submit" value="Share" />
-            </form>
-          </td>
-        </tr>
-        {%endfor%}
-      </table>
+          <tr>
+            <td>{{directory['size']}}</td>
+            <td>{{ directory['name'] }}</td>
+            <td>1</td>
+            <td>
+              <form
+                action="/delete_directory/{{directory['key']}}"
+                method="post"
+              >
+                <input type="submit" name="delete" value="delete" />
+              </form>
+              <form
+                action="/enter_directory/{{directory['key']}}"
+                method="post"
+              >
+                <input type="submit" name="go" value="Go" />
+              </form>
+            </td>
+          </tr>
+          {%endfor%}
+        </table>
+      </div>
+      <div class="fileView">
+        <h1>Files in home Folder</h1>
+        <br />
+        <table>
+          <tr>
+            <th>Size</th>
+            <th>Name</th>
+            <th>Format</th>
+            <th>Date added</th>
+            <th>Date Last Modified</th>
+            <th>Location</th>
+            <th>Actions</th>
+          </tr>
+          {% for file in files%}
 
+          <tr>
+            <td>{{file['size']}}</td>
+            <td>{{ file['name'] }}</td>
+            <td>{{file['format']}}</td>
+            <td class="date">{{file['date_added']}}</td>
+            <td class="date">{{file['last_modified']}}</td>
+            <td>{{file['path']}}</td>
+            <td>
+              <form action="/delete_file/{{ file['key'] }}" method="post">
+                <input type="submit" value="Delete" />
+              </form>
+              <form action="/versions/{{ file['key'] }}" method="post">
+                <input type="submit" value="Versions" />
+              </form>
+              <form action="/share" method="post">
+                <input
+                  type="hidden"
+                  name="file_key"
+                  value="{{ file['key'] }}"
+                />
+                <input type="submit" value="Share" />
+              </form>
+            </td>
+          </tr>
+          {%endfor%}
+        </table>
+      </div>
       {% elif error_message %}
       <p>Error Message: {{ error_message }}</p>
       {% endif %}
     </div>
-
     <script src="https://www.gstatic.com/firebasejs/7.14.5/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.8.0/firebase-auth.js"></script>
     <script src="{{ url_for('static', filename='app-setup.js') }}"></script>

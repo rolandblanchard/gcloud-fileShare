@@ -14,13 +14,27 @@
       href="https://www.gstatic.com/firebasejs/ui/4.4.0/firebase-ui-auth.css"
     />
   </head>
-  <body>
-    <div>
-      <h1>File Sharing</h1>
+  <header>
+    <h1 class="title">File Sharing</h1>
+    <div id="firebase-auth-container"></div>
+    <button id="sign-out" hidden="true">Sign out</button>
+    <div id="login-info" hidden="true">
+      <h2>Login Info</h2>
+      {% if user_data %}
+      <dl>
+        <dt>Name:</dt>
+        <dd>{{ user_data['name'] }}</dd>
+        <dt>Email:</dt>
+        <dd>{{ user_data['email'] }}</dd>
+      </dl>
       <form action="/">
         <input type="submit" value="Home" />
       </form>
-      <div class="ownedFileBlock">
+    </div>
+  </header>
+  <body>
+    <div class="container">
+      <div class="fileView">
         <br />
         {% for file in owned_list %}
         <h2>{{file['name']}}</h2>
@@ -86,7 +100,7 @@
         </table>
         {%endfor%}
       </div>
-      <div class="collabFileBlock">
+      <div class="fileView">
         <br />
         {% for file in collab_list %}
         <h2>{{file['name']}}</h2>
@@ -152,6 +166,9 @@
         </table>
         {%endfor%}
       </div>
+      {% elif error_message %}
+      <p>Error Message: {{ error_message }}</p>
+      {% endif %}
     </div>
     <script src="https://www.gstatic.com/firebasejs/7.14.5/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.8.0/firebase-auth.js"></script>
