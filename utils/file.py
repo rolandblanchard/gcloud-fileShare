@@ -144,7 +144,7 @@ def shareFile(user_info, file_key):
 
 
 def addCollaborator(user_email, file_key):
-    print('in addCollab')
+    print('\nin addCollab\n')
     collab_directory = getSharingDirectory(user_email)
     if collab_directory == None:
         return False
@@ -152,3 +152,20 @@ def addCollaborator(user_email, file_key):
         addFileToDirectory(collab_directory, file_key)
         return True
     return False
+
+
+def getSharedFiles(user_info):
+    owned_list = []
+    collab_list = []
+
+    shared = retrieveDirectoryEntity(user_info, 'shared')
+    print('\nsearching for shared files\n')
+
+    for key in shared['file_list']:
+        file = getEntityById('File', key)
+        if file['owner'] == user_info['email']:
+            owned_list.append(file)
+        else:
+            collab_list.append(file)
+
+    return owned_list, collab_list

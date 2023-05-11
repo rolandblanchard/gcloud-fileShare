@@ -26,7 +26,7 @@ def createVersionEntity(fileBlob):
     return entity
 
 
-def addVersionToFile(old_file, version):
+def addVersionToFile(file_added, old_file, version):
 
     version.update({
         'path': old_file['path'],
@@ -39,8 +39,8 @@ def addVersionToFile(old_file, version):
 
     old_file.update({
         'versions': file_versions,
-        'current_version': version['generation'],
-        'last_modified': version['time_created']
+        'current_version': file_added.generation,
+        'last_modified': file_added.time_created
     })
     datastore_client.put(old_file)
 

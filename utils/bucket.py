@@ -160,15 +160,18 @@ def getBlobVersions(file):
 ''' Funtion to extract the latest blob version given the file entity'''
 
 
-def getLatestVersion(file):
+def getPreviousVersion(file, latest_generation):
+
     versions = getBlobVersions(file)
-    latest = None
+    previous_version = None
+    for i in versions:
+        if i.generation == latest_generation:
+            print('found latest')
+            return previous_version
+        else:
+            previous_version = i
 
-    for version in versions:
-        if not latest or version.generation > latest.generation:
-            latest = version
-
-    return latest
+    return None
 
 
 def enable_versioning():

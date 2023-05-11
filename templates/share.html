@@ -20,19 +20,19 @@
       <form action="/">
         <input type="submit" value="Home" />
       </form>
-      <br />
-      {% for file in file_list %}
-      <h2>{{file['name']}}</h2>
-      <h3>Owner: {{file['owner']}}</h3>
-      <form action="/add_user" method="post">
-        Share with:
-        <input type="hidden" name="file_key" value="{{ file['key'] }}" />
-        <input type="email" name="email" placeholder="enter email" /><input
-          type="submit"
-          value="Add"
-        />
-      </form>
-      <div class="sharedFileBlock">
+      <div class="ownedFileBlock">
+        <br />
+        {% for file in owned_list %}
+        <h2>{{file['name']}}</h2>
+        <h3>Owner: {{file['owner']}}</h3>
+        <form action="/add_user" method="post">
+          Share with:
+          <input type="hidden" name="file_key" value="{{ file['key'] }}" />
+          <input type="email" name="email" placeholder="enter email" /><input
+            type="submit"
+            value="Add"
+          />
+        </form>
         <table>
           <tr>
             <th>Size</th>
@@ -44,13 +44,16 @@
 
           <tr>
             <td>{{version['size']}}</td>
-            <td>
+            <td>{{ version['time_created'] }}</td>
+
+            <td class="generation">{{version['generation']}}</td>
+            <td class="date">{{file['name']}}</td>
+            <td class="actions">
               <form
                 action="/delete_version/{{ file['key'] }}/{{version['generation']}}"
                 method="post"
               >
                 <input type="submit" value="Delete" />
-                {{ version['time_created'] }}
               </form>
               <form
                 action="/download/{{ file['key'] }}/{{version['generation']}}"
@@ -59,14 +62,53 @@
                 <input type="submit" value="Download" />
               </form>
             </td>
-
-            <td class="generation">{{version['generation']}}</td>
-            <td class="date">{{file['name']}}</td>
           </tr>
           {%endfor%}
         </table>
+        {%endfor%}
       </div>
-      {%endfor%}
+      <div class="collabFileBlock">
+        <br />
+        {% for file in collab_list %}
+        <h2>{{file['name']}}</h2>
+        <h3>Owner: {{file['owner']}}</h3>
+        <form action="/add_user" method="post">
+          Share with:
+          <input type="hidden" name="file_key" value="{{ file['key'] }}" />
+          <input type="email" name="email" placeholder="enter email" /><input
+            type="submit"
+            value="Add"
+          />
+        </form>
+        <table>
+          <tr>
+            <th>Size</th>
+            <th>Date added</th>
+            <th>Version of</th>
+            <th>Name</th>
+            <th>Actions</th>
+          </tr>
+          {% for version in file['versions']%}
+
+          <tr>
+            <td>{{version['size']}}</td>
+            <td>{{ version['time_created'] }}</td>
+
+            <td class="generation">{{version['generation']}}</td>
+            <td class="date">{{file['name']}}</td>
+            <td class="actions">
+              <form
+                action="/download/{{ file['key'] }}/{{version['generation']}}"
+                method="post"
+              >
+                <input type="submit" value="Download" />
+              </form>
+            </td>
+          </tr>
+          {%endfor%}
+        </table>
+        {%endfor%}
+      </div>
     </div>
     <script src="https://www.gstatic.com/firebasejs/7.14.5/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.8.0/firebase-auth.js"></script>

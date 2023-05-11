@@ -41,14 +41,17 @@ def addUserHandler():
             collab_user = getEntityById('User', collab_email)
 
             if collab_user == None:
-                print('User not found')
+                print('\nUser not found\n')
             else:
+                print('\nUser found\n')
                 addCollaborator(collab_email, file_key)
+
+            owned_list, collab_list = getSharedFiles(user_info)
 
         except ValueError as exc:
             error_message = str(exc)
 
-    return redirect('/')
+    return render_template('share.html', user_data=claims, error_message=error_message, owned_list=owned_list, collab_list=collab_list)
 
 
 @app.route('/enterShare', methods=['POST'])
@@ -56,7 +59,7 @@ def enterSharedHandler():
     id_token = request.cookies.get("token")
     error_message = None
     shared = None
-    file_list = []
+    owned_list, collab_list = []
 
     if id_token:
         try:
@@ -65,16 +68,12 @@ def enterSharedHandler():
 
             user_info = retrieveUserInfo(claims)
 
-            shared = retrieveDirectoryEntity(user_info, 'shared')
-            print('shared: ', shared)
-
-            for key in shared['file_list']:
-                file_list.append(getEntityById('File', key))
+            owned_list, collab_list = getSharedFiles(user_info)
 
         except ValueError as exc:
             error_message = str(exc)
 
-    return render_template('share.html', user_data=claims, error_message=error_message, file_list=file_list)
+    return render_template('share.html', user_data=claims, error_message=error_message, owned_list=owned_list, collab_list=collab_list)
 
 
 @app.route('/share', methods=['POST'])
@@ -293,14 +292,15 @@ def uploadFileHandler(key):
 
             if file_found != None:
                 # create version from old_file
-                file_blob = getLatestVersion(file_found)
+                file_blob = getPreviousVersion(
+                    file_found, file_added.generation)
 
                 print('\ngeneration', file_blob.generation, "\ntime_created:",
                       file_blob.time_created, "\nname:", file_blob.name)
 
-                new_version = createVersionEntity(file_blob)
+                previous_version = createVersionEntity(file_blob)
 
-                addVersionToFile(file_found, new_version)
+                addVersionToFile(file_added, file_found, previous_version)
 
                 # moveFileToVersion(file_found)
 
