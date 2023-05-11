@@ -45,9 +45,9 @@ def addVersionToFile(file_added, old_file, version):
 def deleteVersionEntity(file, generation):
     size = 0
     for version in file['versions']:
-        print('version-', version['generation'])
+
         if version['generation'] == int(generation):
-            print('found')
+
             size = int(version['size'])
             file['versions'].remove(version)
             datastore_client.put(file)

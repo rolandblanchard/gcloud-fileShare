@@ -30,9 +30,6 @@ def uploadFromDirectory(user_info, file, directory, key):
         file_blob = getPreviousVersion(
             file_found, file_added.generation)
 
-        print('\ngeneration', file_blob.generation, "\ntime_created:",
-              file_blob.time_created, "\nname:", file_blob.name)
-
         previous_version = createVersionEntity(file_blob)
 
         addVersionToFile(file_added, file_found, previous_version)
@@ -54,7 +51,7 @@ def uploadFromShared(file_owner, file_key, file):
 
     original_directory = getEntityById('Directory', original_file['root'])
 
-    print("\nadding file version from sharing", file_owner, file)
+    print("\nadding file version from sharing: ", file_owner, '\n')
 
     collab_info = getUserInfoByEmail(file_owner)
 
@@ -70,9 +67,6 @@ def uploadFromShared(file_owner, file_key, file):
     # create version from old_file
     file_blob = getPreviousVersion(original_file, file_added.generation)
 
-    print('\ngeneration', file_blob.generation, "\ntime_created:",
-          file_blob.time_created, "\nname:", file_blob.name)
-
     previous_version = createVersionEntity(file_blob)
 
     addVersionToFile(file_added, original_file, previous_version)
@@ -83,12 +77,11 @@ def uploadFromShared(file_owner, file_key, file):
 def deleteFile(user_info, file_key):
 
     file = getEntityById('File', file_key)
-    print('dir of file: ', file)
+
     file_size = getAllFileMemory(file)
 
     file_path = file['path']
     directory_name = file_path.split('/')[-2]
-    print('dir of file: ', directory_name)
 
     directory = retrieveDirectoryEntity(user_info, directory_name)
 
@@ -113,7 +106,7 @@ def deleteFile(user_info, file_key):
 
 
 def shareFile(user_info, file_key):
-    print('in shareFile')
+
     file = getEntityById('File', file_key)
     sharing = retrieveDirectoryEntity(user_info, 'shared')
     if not fileKeyExists(sharing, file_key):
@@ -125,7 +118,7 @@ def getSharedFiles(user_info):
     collab_list = []
 
     shared = retrieveDirectoryEntity(user_info, 'shared')
-    print('\nsearching for shared files\n')
+    print('\nsearching for shared files...')
 
     for key in shared['file_list']:
         file = getEntityById('File', key)
@@ -142,17 +135,17 @@ def getSharedFiles(user_info):
 
 
 def addCollaborator(user_email, file_key):
-    print('\nin addCollab\n')
+    print('\nin addCollab')
     collab_directory = getSharingDirectory(user_email)
     if collab_directory == None:
-        print('\nDirectory not found\n')
+        print('Directory not found\n')
         return False
-    print('\nDirectory found\n')
+    print('Directory found\n')
     if not fileKeyExists(collab_directory, file_key):
-        print('\nfilekey new\n')
+        print('filekey new\n')
         addFileToDirectory(collab_directory, file_key)
         return True
 
-    print('\nfilekey exists\n')
+    print('filekey exists\n')
 
     return False

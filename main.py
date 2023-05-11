@@ -2,6 +2,7 @@ import datetime
 import random
 import local_constants
 import urllib.parse
+import os
 import google.oauth2.id_token
 from google.auth.transport import requests
 from google.cloud import datastore, storage
@@ -26,8 +27,6 @@ firebase_request_adapter = requests.Request()
 def addUserHandler():
     id_token = request.cookies.get("token")
     error_message = None
-    shared = None
-    file_list = []
 
     if id_token:
         try:
@@ -41,12 +40,10 @@ def addUserHandler():
 
             collab_user = getUserInfoByEmail(collab_email)
 
-            print('\n collab user: ', collab_user, '\n')
-
             if collab_user == None:
-                print('\nUser not found\n')
+                print('\nUser Not found: ', collab_email, '\n')
             else:
-                print('\nUser found\n')
+                print('\nUser found: ', collab_email, '\n')
                 addCollaborator(collab_email, file_key)
 
             owned_list, collab_list = getSharedFiles(user_info)
@@ -147,13 +144,13 @@ def deleteVersioningHandler(filekey, generation):
             version_list = file['versions']
 
             file_path = file['path']+file['name']
-            print("deleting version entity- ", generation)
+            print("\ndeleting version entity- ", generation)
 
             updated_size = deleteVersionEntity(file, generation)
 
             if updated_size > 0:
 
-                print("deleting blob version of size", updated_size)
+                print("deleting blob version of size", updated_size, "\n")
                 deleteBlobVersion(file_path, generation)
                 updateMemory(directory, -updated_size)
 
@@ -179,7 +176,8 @@ def enterVersioningHandler(file_id):
                 id_token, firebase_request_adapter)
 
             file = getEntityById('File', file_id)
-            print("Entering versioning for: ", file['name'])
+
+            print("\nEntering versioning for: ", file['name'], "\n")
 
             directory = getEntityById('Directory', file['root'])
             current_directory = directory['name']
@@ -206,8 +204,8 @@ def enterDirectoryHandler(dirname):
     user_info = None
     files = []
     directory = None
-
     memory = 0
+    dir_mem = 0
 
     if id_token:
         try:
@@ -221,16 +219,14 @@ def enterDirectoryHandler(dirname):
 
             collectMemory(user_info)
 
-            dir_mem = directory['size']
-
-            memory = user_info['size']
+            memory = formatSize(user_info['size'])
+            dir_mem = formatSize(directory['size'])
 
         except ValueError as exc:
             error_message = str(exc)
-
     return render_template('directory.html', user_data=claims, error_message=error_message,
                            user_info=user_info,
-                           files=files, directory=directory, memory=memory)
+                           files=files, directory=directory, memory=memory, dir_mem=dir_mem)
 
 
 @app.route('/add_directory', methods=['POST'])
@@ -264,6 +260,7 @@ def addDirectoryHandler():
                 # adding directory to datastore
                 id = createDirectoryEntity(claims['user_id'], directory_name)
                 addDirectoryToUser(user_info, id)
+                print('\nDirectory Successfully created \n')
 
         except ValueError as exc:
             error_message = str(exc)
@@ -316,6 +313,8 @@ def uploadFileFromDirectoryHandler(key):
     directory = None
     file_size = 0
     files = []
+    dir_mem = 0
+    memory = 0
 
     if id_token:
         try:
@@ -327,23 +326,30 @@ def uploadFileFromDirectoryHandler(key):
                 return redirect('/')
             user_info = retrieveUserInfo(claims)
 
-            directory = getEntityById("Directory", key)
+            if user_info['size'] < 5000000:
+                directory = getEntityById("Directory", key)
 
-            file_size = uploadFromDirectory(user_info, file, directory, key)
+                file_size = uploadFromDirectory(
+                    user_info, file, directory, key)
 
-            # Update memory usage in directory
-            updateMemory(directory, file_size)
-            print('updating memory, increasing by ', file_size)
+                # Update memory usage in directory
+                updateMemory(directory, file_size)
+                print('updating memory, increasing by ', file_size)
+
+                collectMemory(user_info)
+            else:
+                print('5MB exceeded, must remove files to upload')
 
             files = retrieveFileEntities(directory)
-
-            collectMemory(user_info)
+            memory = formatSize(user_info['size'])
+            directory = getEntityById("Directory", key)
+            dir_mem = formatSize(directory['size'])
 
         except ValueError as exc:
             error_message = str(exc)
     return render_template('directory.html', user_data=claims, error_message=error_message,
                            user_info=user_info,
-                           files=files, directory=directory)
+                           files=files, directory=directory, memory=memory, dir_mem=dir_mem)
 
 
 @app.route('/upload_file/<key>', methods=['POST'])
@@ -366,12 +372,14 @@ def uploadFileHandler(key):
             user_info = retrieveUserInfo(claims)
 
             directory = getEntityById("Directory", key)
-
-            file_size = uploadFromDirectory(user_info, file, directory, key)
-
-            # Update memory usage in directory
-            updateMemory(directory, file_size)
-            print('updating memory, increasing by ', file_size)
+            if user_info['size'] < 5000000:
+                file_size = uploadFromDirectory(
+                    user_info, file, directory, key)
+                # Update memory usage in directory
+                updateMemory(directory, file_size)
+                print('updating memory, increasing by ', file_size)
+            else:
+                print('5MB exceeded, must remove files to upload')
 
         except ValueError as exc:
             error_message = str(exc)
@@ -463,20 +471,19 @@ def root():
 
             sharing = retrieveDirectoryEntity(user_info, 'shared')
             sharing_id = sharing['key']
-            print('retrieved sharing: ', sharing_id)
 
             # Fetch viewable directory list from datastore
             directories = getViewingDirectories(user_info)
 
             root = retrieveDirectoryEntity(user_info, user_info_id)
-            print("root: ", root)
+
             files = retrieveFileEntities(root)
-            print('Files: ', files)
+
             root_id = root['key']
 
             collectMemory(user_info)
 
-            memory = user_info['size']
+            memory = formatSize(user_info['size'])
 
         except ValueError as exc:
             error_message = str(exc)

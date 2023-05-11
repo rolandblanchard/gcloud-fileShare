@@ -70,7 +70,6 @@
           <tr>
             <th>Size</th>
             <th>Name</th>
-            <th>Number of files</th>
             <th>Actions</th>
           </tr>
           {% for directory in directories%}
@@ -78,7 +77,6 @@
           <tr>
             <td>{{directory['size']}}</td>
             <td>{{ directory['name'] }}</td>
-            <td>1</td>
             <td>
               <form
                 action="/delete_directory/{{directory['name']}}"

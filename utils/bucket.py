@@ -90,7 +90,7 @@ def deleteDirectoryBlob(directory_name):
 def getBlob(file):
 
     if file == None:
-        print("failed to getBlob file: ", file)
+        print("failed to file empty: ", file['name'])
         return None
     file_path = file['path']+file['name']
 
@@ -137,7 +137,7 @@ def moveFileToVersion(old_file):
 def getBlobVersions(file):
 
     if file == None:
-        print("failed to getBlob file: ", file)
+        print("failed, file empty: ", file['name'])
         return None
 
     file_path = file['path']+file['name']
@@ -166,7 +166,6 @@ def getPreviousVersion(file, latest_generation):
     previous_version = None
     for i in versions:
         if i.generation == latest_generation:
-            print('found latest')
             return previous_version
         else:
             previous_version = i
@@ -184,14 +183,14 @@ def enable_versioning():
 
     # Check if versioning is already enabled
     if bucket.versioning_enabled:
-        print(
-            f"Versioning is already enabled for bucket {local_constants.PROJECT_STORAGE_BUCKET}")
+        print("Versioning is already enabled for bucket",
+              local_constants.PROJECT_STORAGE_BUCKET)
     else:
         # Enable versioning for the bucket
         bucket.versioning_enabled = True
         bucket.patch()
-        print(
-            f"Versioning has been enabled for bucket {local_constants.PROJECT_STORAGE_BUCKET}")
+        print("Versioning has been enabled for bucket",
+              local_constants.PROJECT_STORAGE_BUCKET)
 
 
 def deleteBlobVersion(blob_name, generation):
@@ -219,6 +218,5 @@ def getUserMemoryUsage(user_id):
     bucket = storage_client.get_bucket(local_constants.PROJECT_STORAGE_BUCKET)
 
     blob = bucket.get_blob(user_id)
-    print("memory blob ", blob, user_id)
 
     return blob.size

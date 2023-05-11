@@ -22,7 +22,8 @@ def getEntityById(type, id):
     return datastore_client.get(key)
 
 
-def format_size(size):
+def formatSize(size):
+    size = int(size)
     for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
         if size < 1024.0:
             return "{:.2f} {}".format(size, unit)
