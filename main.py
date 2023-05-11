@@ -245,14 +245,25 @@ def addDirectoryHandler():
             claims = google.oauth2.id_token.verify_firebase_token(id_token,
                                                                   firebase_request_adapter)
             directory_name = request.form['dir_name']
-            if directory_name == '' or directory_name.find('/') != -1:
-                return redirect('/')
 
             user_info = retrieveUserInfo(claims)
-            addDirectoryBlob(claims['user_id'] + '/' + directory_name+'/')
-            # adding directory to datastore
-            id = createDirectoryEntity(claims['user_id'], directory_name)
-            addDirectoryToUser(user_info, id)
+
+            dir_list = retrieveDirectories(user_info)
+
+            cancel = False
+            for dir in dir_list:
+                if directory_name == dir['name']:
+                    print('\nDirectory Name already exists \n')
+                    cancel = True
+
+            if not cancel:
+                if directory_name == '' or directory_name.find('/') != -1:
+                    return redirect('/')
+
+                addDirectoryBlob(claims['user_id'] + '/' + directory_name+'/')
+                # adding directory to datastore
+                id = createDirectoryEntity(claims['user_id'], directory_name)
+                addDirectoryToUser(user_info, id)
 
         except ValueError as exc:
             error_message = str(exc)

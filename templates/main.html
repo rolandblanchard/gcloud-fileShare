@@ -19,7 +19,7 @@
     <h1 class="title">CSP Assignment</h1>
     <div id="firebase-auth-container"></div>
     <button id="sign-out" hidden="true">Sign out</button>
-    <div class="enterSharing">
+    <div id="enterSharing">
       <h3>File Sharing</h3>
       <form action="/enterShare" method="POST">
         <input type="submit" value="Enter Share" />
@@ -81,7 +81,7 @@
             <td>1</td>
             <td>
               <form
-                action="/delete_directory/{{directory['key']}}"
+                action="/delete_directory/{{directory['name']}}"
                 method="post"
               >
                 <input type="submit" name="delete" value="delete" />

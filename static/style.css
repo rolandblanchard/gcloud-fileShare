@@ -5,6 +5,10 @@ body {
   margin: 0;
 }
 
+.logged-out .container {
+  display: none;
+}
+
 header {
   background-color: #add8e6;
   border-radius: 10px;

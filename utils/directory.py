@@ -71,6 +71,7 @@ def deleteDirectory(user_info, directory_name):
 
     if directory_name == 'root':
         return False
+    print('\n directory deletion: ', directory_name)
 
     directory_list = user_info['directory_list']
 

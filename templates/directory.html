@@ -18,10 +18,9 @@
     <h1 class="title">Directory View</h1>
     <div id="firebase-auth-container"></div>
     <button id="sign-out" hidden="true">Sign out</button>
-    <div class="enterSharing">
-      <h3>File Sharing</h3>
-      <form action="/enterShare" method="POST">
-        <input type="submit" value="Enter Share" />
+    <div id="enterSharing">
+      <form action="/">
+        <input type="submit" value="Home" />
       </form>
     </div>
     <div id="login-info" hidden="true">
@@ -34,9 +33,6 @@
         <dd>{{ user_data['email'] }}</dd>
       </dl>
     </div>
-    <form action="/">
-      <input type="submit" value="Home" />
-    </form>
   </header>
   <body>
     <div class="container">
