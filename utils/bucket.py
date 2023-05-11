@@ -105,32 +105,6 @@ def getBlob(file):
         return None
 
 
-''' Moves any blob to a new versions folder'''
-# Unused
-
-
-def moveFileToVersion(old_file):
-
-    source_path = old_file['path']
-    file_name = old_file['name']
-    source_blob_name = source_path + file_name
-    destination_blob_name = old_file['user_id']+"/versions/"+file_name
-    # Initialize a client
-    storage_client = storage.Client(project=local_constants.PROJECT_NAME)
-
-    # Get the source and destination blobs
-    bucket = storage_client.bucket(local_constants.PROJECT_STORAGE_BUCKET)
-    source_blob = bucket.blob(source_blob_name)
-
-    # Copy the source blob to the destination blob
-    bucket.copy_blob(source_blob, bucket, destination_blob_name)
-    # Delete the source blob
-    source_blob.delete()
-
-    print(
-        f"Moved {source_blob_name} to {destination_blob_name} in the bucket")
-
-
 ''' Function to pull a full version list of a blob given the file entity '''
 
 
@@ -211,12 +185,3 @@ def downloadBlobVersion(blob_name, generation):
     blob = bucket.blob(blob_name, generation=generation)
 
     return blob.download_as_bytes()
-
-
-def getUserMemoryUsage(user_id):
-    storage_client = storage.Client(project=local_constants.PROJECT_NAME)
-    bucket = storage_client.get_bucket(local_constants.PROJECT_STORAGE_BUCKET)
-
-    blob = bucket.get_blob(user_id)
-
-    return blob.size

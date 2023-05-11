@@ -9,14 +9,6 @@ from flask import Flask, render_template, request, redirect, Response
 datastore_client = datastore.Client()
 
 
-def urlSafe(url):
-    return urllib.parse.quote(url, safe="")
-
-
-def parseSafeUrl(url):
-    return urllib.parse.unquote(url)
-
-
 def getEntityById(type, id):
     key = datastore_client.key(type, id)
     return datastore_client.get(key)

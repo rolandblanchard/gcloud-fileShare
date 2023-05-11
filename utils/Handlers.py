@@ -116,6 +116,35 @@ def deleteFile(user_info, file_key):
     deleteFileBlob(file)
 
 
+def deleteDirectory(user_info, directory_name):
+
+    if directory_name == 'root':
+        return False
+    print('\n directory deletion: ', directory_name)
+
+    directory_list = user_info['directory_list']
+
+    directory = retrieveDirectoryEntity(user_info, directory_name)
+
+    if directory['file_list'] != []:
+        print("ERROR: Must be empty before deletion")
+        return False
+
+    datastore_client.delete(directory)
+
+    directory_list.remove(directory_name)
+
+    user_info.update({
+        'directory_list': directory_list
+    })
+
+    datastore_client.put(user_info)
+
+    deleteDirectoryBlob(directory_name)
+
+    return True
+
+
 def shareFile(user_info, file_key):
 
     file = getEntityById('File', file_key)
